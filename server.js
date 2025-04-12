@@ -273,8 +273,12 @@ const db = new sqlite3.Database(dbPath, (err) => {
 // Fonction pour générer le PDF
 function generatePDF(clientData) {
   return new Promise((resolve, reject) => {
-    // Réduire les marges pour optimiser l'espace
-    const doc = new PDFDocument({ margin: 30 });
+    // Créer un document PDF avec des marges standard
+    const doc = new PDFDocument({ 
+      margin: 50,
+      size: 'A4' // Format A4 standard pour meilleure compatibilité
+    });
+    
     const pdfDir = process.env.NODE_ENV === 'production' ? '/tmp/pdfs' : './pdfs';
     const pdfPath = `${pdfDir}/${clientData.id}_${clientData.main_driver_name}_${clientData.main_driver_firstname}.pdf`;
     
@@ -297,90 +301,93 @@ function generatePDF(clientData) {
     // Pipe le PDF vers le stream
     doc.pipe(pdfStream);
     
-    // Fonction d'aide pour ajouter des champs avec étiquette et valeur alignés (optimisée pour l'espace)
+    // Fonctions utilitaires simples mais efficaces pour le PDF
+    
+    // Fonction pour ajouter un champ avec étiquette et valeur
     const addField = (label, value, options = {}) => {
-      const { bold = true, labelWidth = 150, moveDown = 0.2 } = options;
-      const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      const { bold = true } = options;
       
-      doc.font('Helvetica').text(label, {
-        continued: true,
-        width: labelWidth
+      doc.font('Helvetica').fontSize(11).text(label, {
+        continued: true
       });
       
       if (bold && value) {
         doc.font('Helvetica-Bold');
       }
       
-      doc.text(value || '', {
-        continued: false
-      });
-      
+      doc.text(value || '');
       doc.font('Helvetica');
-      doc.moveDown(moveDown);
+      doc.moveDown(0.5);
     };
     
-    // Fonction pour ajouter deux champs côte à côte (pour optimiser l'espace)
-    const addFieldRow = (label1, value1, label2, value2) => {
-      const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-      const colWidth = pageWidth / 2 - 5; // Réduire l'écart entre les colonnes
-      
-      // Définir des largeurs fixes pour les étiquettes et les valeurs
-      const labelWidth1 = 100;
-      const valueWidth1 = colWidth - labelWidth1;
-      
-      // Premier champ
-      const yPos = doc.y;
-      doc.font('Helvetica').text(label1, {
-        continued: true,
-        width: labelWidth1
-      });
-      
-      if (value1) {
-        doc.font('Helvetica-Bold');
-      }
-      
-      doc.text(value1 || '', {
-        continued: false,
-        width: valueWidth1
-      });
-      
-      // Deuxième champ sur la même ligne
-      const labelWidth2 = 100;
-      const valueWidth2 = colWidth - labelWidth2;
-      
-      doc.font('Helvetica');
-      doc.text(label2, doc.page.margins.left + colWidth + 10, yPos, {
-        continued: true,
-        width: labelWidth2
-      });
-      
-      if (value2) {
-        doc.font('Helvetica-Bold');
-      }
-      
-      doc.text(value2 || '', {
-        continued: false,
-        width: valueWidth2
-      });
-      
-      doc.font('Helvetica');
-      doc.moveDown(0.2);
-    };
-    
-    // Fonction d'aide pour créer des titres de section avec fond coloré (optimisée)
+    // Fonction pour ajouter un titre de section avec fond coloré
     const addSectionTitle = (text) => {
       const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-      doc.moveDown(0.3);
+      doc.moveDown(0.5);
       const y = doc.y;
       
+      // Dessiner le fond du titre
       doc.save();
       doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
-      doc.rect(doc.page.margins.left, y, pageWidth, 18).fill();
-      doc.fillColor('#333333'); // Couleur du texte
-      doc.fontSize(12).font('Helvetica-Bold').text(text, doc.page.margins.left + 5, y + 4, { width: pageWidth - 10 });
+      doc.rect(doc.page.margins.left, y, pageWidth, 22).fill();
+      
+      // Ajouter le texte du titre
+      doc.fillColor('#000000');
+      doc.fontSize(14).font('Helvetica-Bold').text(text, doc.page.margins.left + 10, y + 5, { width: pageWidth - 20 });
       doc.restore();
+      
+      doc.moveDown(1);
+      doc.font('Helvetica').fontSize(11);
+    };
+    
+    // Fonction pour créer deux colonnes bien alignées
+    const createTwoColumnLayout = (leftTitle, rightTitle, leftItems, rightItems) => {
+      const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      const columnWidth = pageWidth / 2 - 10;
+      
+      // Position de départ
+      const startY = doc.y;
+      
+      // Titre de la colonne gauche
+      doc.font('Helvetica-Bold').fontSize(12);
+      doc.text(leftTitle, { underline: true });
       doc.moveDown(0.5);
-      doc.font('Helvetica').fontSize(10); // Réduire la taille de police pour économiser de l'espace
+      
+      // Éléments de la colonne gauche
+      doc.font('Helvetica').fontSize(11);
+      leftItems.forEach(item => {
+        doc.text(`${item.label}: `, {
+          continued: true
+        });
+        doc.font('Helvetica-Bold').text(item.value || '');
+        doc.font('Helvetica').moveDown(0.5);
+      });
+      
+      // Sauvegarder la position Y après la colonne gauche
+      const leftEndY = doc.y;
+      
+      // Titre de la colonne droite
+      doc.font('Helvetica-Bold').fontSize(12);
+      doc.text(rightTitle, doc.page.margins.left + columnWidth + 20, startY, { underline: true });
+      doc.moveDown(0.5);
+      
+      // Position pour les éléments de la colonne droite
+      let rightY = startY + doc.currentLineHeight() * 1.5;
+      
+      // Éléments de la colonne droite
+      doc.font('Helvetica').fontSize(11);
+      rightItems.forEach(item => {
+        doc.text(`${item.label}: `, doc.page.margins.left + columnWidth + 20, rightY, {
+          continued: true
+        });
+        doc.font('Helvetica-Bold').text(item.value || '');
+        doc.font('Helvetica');
+        rightY += doc.currentLineHeight() * 1.5;
+      });
+      
+      // Revenir à la position la plus basse entre les deux colonnes
+      doc.y = Math.max(leftEndY, rightY);
+      doc.moveDown(0.5);
     };
     
     // Déterminer la langue
@@ -425,222 +432,250 @@ function generatePDF(clientData) {
       addressInfo: isFrench ? 'Adresse' : 'Address'
     };
     
-    // Définir la police et la taille de base
-    doc.font('Helvetica').fontSize(10);
+    //=====================================
+    // PREMIÈRE PAGE - CONDUCTEUR ET VÉHICULE
+    //=====================================
     
-    // En-tête compact avec logo et informations principales
-    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    // Police et taille de base
+    doc.font('Helvetica').fontSize(12);
     
-    // Créer une ligne d'en-tête avec le titre et la date
-    doc.fontSize(16).font('Helvetica-Bold').text('RAIATEA RENT CAR', { align: 'center' });
-    doc.fontSize(12).text(texts.title, { align: 'center' });
+    // En-tête avec titre
+    doc.fontSize(20).font('Helvetica-Bold').text('RAIATEA RENT CAR', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(16).text(texts.title, { align: 'center' });
+    doc.moveDown(1);
     
-    // Date et ID sur la même ligne pour économiser de l'espace
+    // Date et ID
     const today = new Date().toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', { 
       year: 'numeric', month: 'long', day: 'numeric' 
     });
     
-    // Dessiner un rectangle autour de l'ID
-    doc.moveDown(0.3);
-    doc.fontSize(10).font('Helvetica');
+    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
     
-    // Afficher la date à gauche et l'ID à droite
-    doc.text(today, { align: 'left', continued: false });
+    // Date à gauche
+    doc.fontSize(12).font('Helvetica').text(today, { align: 'left' });
     
+    // ID à droite sur la même ligne
     const idText = `ID: ${clientData.id}`;
-    doc.font('Helvetica-Bold').text(idText, { align: 'right' });
-    doc.moveDown(0.5);
+    const idWidth = doc.widthOfString(idText);
+    doc.text(idText, doc.page.width - doc.page.margins.right - idWidth, doc.y - doc.currentLineHeight());
     
-    // Conducteur principal - titre avec fond jaune
+    doc.moveDown(1.5);
+    
+    // Titre Conducteur Principal
     addSectionTitle(texts.mainDriver);
     
-    // Informations du conducteur principal avec alignement amélioré et format en colonnes
-    // Utiliser addFieldRow pour mettre deux champs sur la même ligne
-    addFieldRow(`${texts.name}: `, clientData.main_driver_name, `${texts.firstname}: `, clientData.main_driver_firstname);
-    addFieldRow(`${texts.birthDate}: `, clientData.main_driver_birth_date, `${texts.birthPlace}: `, clientData.main_driver_birth_place);
-    addFieldRow(`${texts.nationality}: `, clientData.main_driver_nationality || '', `${texts.phone}: `, clientData.main_driver_phone);
-    addField(`${texts.email}: `, clientData.main_driver_email);
+    // Liste des champs pour le conducteur principal
+    const mainDriverFields = [
+      { label: texts.name, value: clientData.main_driver_name },
+      { label: texts.firstname, value: clientData.main_driver_firstname },
+      { label: texts.birthDate, value: clientData.main_driver_birth_date },
+      { label: texts.birthPlace, value: clientData.main_driver_birth_place },
+      { label: texts.nationality, value: clientData.main_driver_nationality || '' },
+      { label: texts.phone, value: clientData.main_driver_phone },
+      { label: texts.email, value: clientData.main_driver_email }
+    ];
     
-    // Utiliser addFieldRow pour les sections permis et adresse pour un meilleur alignement
-    doc.moveDown(0.3);
+    // Afficher les informations du conducteur principal
+    mainDriverFields.forEach(field => {
+      addField(`${field.label}: `, field.value);
+    });
     
-    // Ajouter les titres des deux sections côte à côte
-    // Utiliser la variable pageWidth déjà déclarée
-    const colWidth = pageWidth / 2 - 5;
+    // Titre du permis de conduire
+    doc.moveDown(0.5);
+    doc.fontSize(12).font('Helvetica-Bold').text(texts.driverLicense, { underline: true });
+    doc.moveDown(0.5);
     
-    // Titre de la section permis de conduire
-    const licenseY = doc.y;
-    doc.font('Helvetica-Bold').fontSize(10).text(texts.driverLicense, { underline: true });
+    // Liste des champs pour le permis de conduire
+    const licenseFields = [
+      { label: texts.licenseNumber, value: clientData.main_driver_license_number || '' },
+      { label: texts.issueDate, value: clientData.main_driver_license_issue_date || '' },
+      { label: texts.expiryDate, value: clientData.main_driver_license_validity_date || '' },
+      { label: texts.issuePlace, value: clientData.main_driver_license_issue_place || '' }
+    ];
     
-    // Titre de la section adresse
-    doc.font('Helvetica-Bold').fontSize(10).text(texts.addressInfo, doc.page.margins.left + colWidth + 10, licenseY, { underline: true });
-    doc.font('Helvetica').fontSize(10);
-    doc.y = licenseY + doc.currentLineHeight() * 1.2;
+    // Afficher les informations du permis
+    licenseFields.forEach(field => {
+      addField(`${field.label}: `, field.value);
+    });
     
-    // Utiliser addFieldRow pour aligner correctement les informations
-    // Permis de conduire et adresse sur la même ligne
-    const licenseLabel = `${texts.licenseNumber}: `;
-    const licenseValue = clientData.main_driver_license_number || '';
-    const addressLabel = `${texts.address}: `;
-    const addressValue = clientData.main_driver_address || '';
-    addFieldRow(licenseLabel, licenseValue, addressLabel, addressValue);
+    // Note sur les photos du permis
+    doc.moveDown(0.5);
+    doc.fontSize(10).font('Helvetica-Oblique').text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
+    doc.moveDown(0.5);
     
-    // Date d'émission et ville sur la même ligne
-    const issueDateLabel = `${texts.issueDate}: `;
-    const issueDateValue = clientData.main_driver_license_issue_date || '';
-    const cityLabel = `${texts.city}: `;
-    const cityValue = clientData.main_driver_city || '';
-    addFieldRow(issueDateLabel, issueDateValue, cityLabel, cityValue);
+    // Titre Adresse
+    doc.fontSize(12).font('Helvetica-Bold').text(texts.addressInfo, { underline: true });
+    doc.moveDown(0.5);
     
-    // Date d'expiration et code postal sur la même ligne
-    const expiryLabel = `${texts.expiryDate}: `;
-    const expiryValue = clientData.main_driver_license_validity_date || '';
-    const postalLabel = `${texts.postalCode}: `;
-    const postalValue = clientData.main_driver_postal_code || '';
-    addFieldRow(expiryLabel, expiryValue, postalLabel, postalValue);
+    // Liste des champs pour l'adresse
+    const addressFields = [
+      { label: texts.address, value: clientData.main_driver_address },
+      { label: texts.city, value: clientData.main_driver_city },
+      { label: texts.postalCode, value: clientData.main_driver_postal_code },
+      { label: texts.country, value: clientData.main_driver_country }
+    ];
     
-    // Lieu d'émission et pays sur la même ligne
-    const issuePlaceLabel = `${texts.issuePlace}: `;
-    const issuePlaceValue = clientData.main_driver_license_issue_place || '';
-    const countryLabel = `${texts.country}: `;
-    const countryValue = clientData.main_driver_country || '';
-    addFieldRow(issuePlaceLabel, issuePlaceValue, countryLabel, countryValue);
-    
-    // Hôtel si présent
+    // Ajouter hôtel si présent
     if (clientData.main_driver_hotel) {
-      addField(`${texts.hotel}: `, clientData.main_driver_hotel, { moveDown: 0.2 });
+      addressFields.push({ label: texts.hotel, value: clientData.main_driver_hotel });
     }
     
-    // Note sur les photos du permis (en petit et en italique)
-    doc.moveDown(0.2);
-    doc.fontSize(8).font('Helvetica-Oblique').text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
-    doc.font('Helvetica').fontSize(10);
+    // Afficher les informations d'adresse
+    addressFields.forEach(field => {
+      addField(`${field.label}: `, field.value);
+    });
     
-    doc.moveDown();
-    
-    // Conducteur additionnel (format compact)
-    if (clientData.has_additional_driver === 'true' || clientData.has_additional_driver === true) {
-      doc.moveDown(0.3);
-      
-      // Titre du conducteur additionnel avec fond jaune
-      addSectionTitle(texts.additionalDriver);
-      
-      // Informations du conducteur additionnel en format compact (deux colonnes)
-      addFieldRow(`${texts.name}: `, clientData.additional_driver_name, `${texts.firstname}: `, clientData.additional_driver_firstname);
-      addFieldRow(`${texts.birthDate}: `, clientData.additional_driver_birth_date, `${texts.birthPlace}: `, clientData.additional_driver_birth_place);
-      addFieldRow(`${texts.nationality}: `, clientData.additional_driver_nationality || '', '', '');
-      
-      // Permis de conduire additionnel en format compact
-      doc.moveDown(0.3);
-      doc.fontSize(10).font('Helvetica-Bold').text(texts.driverLicense, { underline: true });
-      doc.font('Helvetica').fontSize(10);
-      
-      // Informations du permis en format compact
-      addFieldRow(`${texts.licenseNumber}: `, clientData.additional_driver_license_number || '', `${texts.issueDate}: `, clientData.additional_driver_license_issue_date || '');
-      addFieldRow(`${texts.expiryDate}: `, clientData.additional_driver_license_validity_date || '', `${texts.issuePlace}: `, clientData.additional_driver_license_issue_place || '');
-      
-      // Note sur les photos du permis (en petit et en italique)
-      doc.moveDown(0.2);
-      doc.fontSize(8).font('Helvetica-Oblique').text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
-      doc.font('Helvetica').fontSize(10);
-    }
-    
-    // Informations sur le véhicule et cartes de crédit en format compact
-    doc.moveDown(0.3);
+    // Titre Informations du Véhicule
+    doc.moveDown(1);
     addSectionTitle(texts.vehicleInformation);
     
-    // Informations du véhicule en format compact (deux colonnes)
-    // Utiliser des variables pour s'assurer que les étiquettes sont bien alignées
-    const pickupDateLabel = `${texts.pickupDate}: `;
-    const pickupDateValue = clientData.pickup_date || '';
-    const returnDateLabel = `${texts.returnDate}: `;
-    const returnDateValue = clientData.return_date || '';
-    addFieldRow(pickupDateLabel, pickupDateValue, returnDateLabel, returnDateValue);
+    // Liste des champs pour le véhicule
+    const vehicleFields = [
+      { label: texts.pickupDate, value: clientData.pickup_date || '' },
+      { label: texts.returnDate, value: clientData.return_date || '' },
+      { label: texts.pickupLocation, value: clientData.pickup_location || '' },
+      { label: texts.returnLocation, value: clientData.return_location || '' },
+      { label: texts.vehicleCategory, value: clientData.vehicle_category || '' }
+    ];
     
-    const pickupLocationLabel = `${texts.pickupLocation}: `;
-    const pickupLocationValue = clientData.pickup_location || '';
-    const returnLocationLabel = `${texts.returnLocation}: `;
-    const returnLocationValue = clientData.return_location || '';
-    addFieldRow(pickupLocationLabel, pickupLocationValue, returnLocationLabel, returnLocationValue);
+    // Afficher les informations du véhicule
+    vehicleFields.forEach(field => {
+      addField(`${field.label}: `, field.value);
+    });
     
-    addField(`${texts.vehicleCategory}: `, clientData.vehicle_category || '', { moveDown: 0.2 });
+    // Ajouter une deuxième page pour les cartes de crédit et la signature
+    doc.addPage();
     
-    // Carte de crédit principale - titre avec fond jaune
-    doc.moveDown(0.3);
-    addSectionTitle(texts.mainCreditCard);
+    //=====================================
+    // DEUXIÈME PAGE - CARTES ET SIGNATURE
+    //=====================================
     
-    // Informations de la carte de crédit principale en format compact
-    const cardTypeLabel = `${texts.cardType}: `;
-    const cardTypeValue = clientData.main_driver_credit_card_type || '';
-    const cardNumberLabel = `${texts.cardNumber}: `;
-    const cardNumberValue = clientData.main_driver_credit_card || '';
-    addFieldRow(cardTypeLabel, cardTypeValue, cardNumberLabel, cardNumberValue);
+    // Réafficher l'en-tête sur la deuxième page
+    doc.fontSize(20).font('Helvetica-Bold').text('RAIATEA RENT CAR', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(16).text(texts.title, { align: 'center' });
     
-    const cardExpiryLabel = `${texts.expiryDate}: `;
-    const cardExpiryValue = clientData.main_driver_credit_card_expiry || '';
-    const cardHolderLabel = `${texts.cardHolder}: `;
-    const cardHolderValue = `${clientData.main_driver_name || ''} ${clientData.main_driver_firstname || ''}`;
-    addFieldRow(cardExpiryLabel, cardExpiryValue, cardHolderLabel, cardHolderValue);
+    // ID sur la deuxième page pour référence
+    doc.moveDown(0.5);
+    doc.fontSize(12).font('Helvetica-Bold').text(idText, { align: 'right' });
+    doc.moveDown(1.5);
     
-    // Carte de crédit additionnelle en format compact
-    if (clientData.has_additional_card === 'true' || clientData.has_additional_card === true) {
-      doc.moveDown(0.3);
-      addSectionTitle(texts.additionalCreditCard);
+    // Conducteur additionnel (si présent)
+    if (clientData.has_additional_driver === 'true' || clientData.has_additional_driver === true) {
+      // Titre du conducteur additionnel
+      addSectionTitle(texts.additionalDriver);
       
-      // Informations de la carte de crédit additionnelle en format compact
-      const addCardTypeLabel = `${texts.cardType}: `;
-      const addCardTypeValue = clientData.additional_card_type || '';
-      const addCardNumberLabel = `${texts.cardNumber}: `;
-      const addCardNumberValue = clientData.additional_card_number || '';
-      addFieldRow(addCardTypeLabel, addCardTypeValue, addCardNumberLabel, addCardNumberValue);
+      // Liste des champs pour le conducteur additionnel
+      const additionalDriverFields = [
+        { label: texts.name, value: clientData.additional_driver_name },
+        { label: texts.firstname, value: clientData.additional_driver_firstname },
+        { label: texts.birthDate, value: clientData.additional_driver_birth_date },
+        { label: texts.birthPlace, value: clientData.additional_driver_birth_place },
+        { label: texts.nationality, value: clientData.additional_driver_nationality || '' }
+      ];
       
-      const addCardExpiryLabel = `${texts.expiryDate}: `;
-      const addCardExpiryValue = clientData.additional_card_expiry_date || '';
-      const addCardHolderLabel = `${texts.cardHolder}: `;
-      const addCardHolderValue = clientData.additional_card_holder_name || '';
-      addFieldRow(addCardExpiryLabel, addCardExpiryValue, addCardHolderLabel, addCardHolderValue);
+      // Afficher les informations du conducteur additionnel
+      additionalDriverFields.forEach(field => {
+        addField(`${field.label}: `, field.value);
+      });
+      
+      // Titre du permis de conduire additionnel
+      doc.moveDown(0.5);
+      doc.fontSize(12).font('Helvetica-Bold').text(texts.driverLicense, { underline: true });
+      doc.moveDown(0.5);
+      
+      // Liste des champs pour le permis de conduire additionnel
+      const additionalLicenseFields = [
+        { label: texts.licenseNumber, value: clientData.additional_driver_license_number || '' },
+        { label: texts.issueDate, value: clientData.additional_driver_license_issue_date || '' },
+        { label: texts.expiryDate, value: clientData.additional_driver_license_validity_date || '' },
+        { label: texts.issuePlace, value: clientData.additional_driver_license_issue_place || '' }
+      ];
+      
+      // Afficher les informations du permis additionnel
+      additionalLicenseFields.forEach(field => {
+        addField(`${field.label}: `, field.value);
+      });
+      
+      // Note sur les photos du permis additionnel
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica-Oblique').text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
+      doc.moveDown(0.5);
     }
     
-    // Signature (sur la même page si possible)
+    // Carte de crédit principale - titre avec fond jaune
+    addSectionTitle(texts.mainCreditCard);
+    
+    // Liste des champs pour la carte de crédit principale
+    const mainCardFields = [
+      { label: texts.cardType, value: clientData.main_driver_credit_card_type || '' },
+      { label: texts.cardNumber, value: clientData.main_driver_credit_card || '' },
+      { label: texts.expiryDate, value: clientData.main_driver_credit_card_expiry || '' },
+      { label: texts.cardHolder, value: `${clientData.main_driver_name || ''} ${clientData.main_driver_firstname || ''}` }
+    ];
+    
+    // Afficher les informations de la carte principale
+    mainCardFields.forEach(field => {
+      addField(`${field.label}: `, field.value);
+    });
+    
+    // Carte de crédit additionnelle (si présente)
+    if (clientData.has_additional_card === 'true' || clientData.has_additional_card === true) {
+      doc.moveDown(0.5);
+      addSectionTitle(texts.additionalCreditCard);
+      
+      // Liste des champs pour la carte de crédit additionnelle
+      const additionalCardFields = [
+        { label: texts.cardType, value: clientData.additional_card_type || '' },
+        { label: texts.cardNumber, value: clientData.additional_card_number || '' },
+        { label: texts.expiryDate, value: clientData.additional_card_expiry_date || '' },
+        { label: texts.cardHolder, value: clientData.additional_card_holder_name || '' }
+      ];
+      
+      // Afficher les informations de la carte additionnelle
+      additionalCardFields.forEach(field => {
+        addField(`${field.label}: `, field.value);
+      });
+    }
+    
+    // Section signature
     if (clientData.signature_data) {
-      // Vérifier s'il reste assez d'espace sur la page actuelle
-      const remainingHeight = doc.page.height - doc.page.margins.bottom - doc.y;
-      const neededHeight = 150; // Hauteur approximative nécessaire pour la signature
+      doc.moveDown(1);
       
-      if (remainingHeight < neededHeight) {
-        // Pas assez d'espace, ajouter une nouvelle page
-        doc.addPage();
-      } else {
-        // Assez d'espace, ajouter un peu d'espace avant la signature
-        doc.moveDown(0.5);
-      }
-      
-      // Titre de la signature avec fond jaune
+      // Titre de la signature
       addSectionTitle(texts.signature);
       
       try {
-        // Ajouter la signature avec une taille réduite
+        // Centrer la signature sur la page
         doc.image(clientData.signature_data, {
-          fit: [250, 100],
+          fit: [300, 150],
           align: 'center'
         });
         
-        // Ajouter une ligne pour la date avec un format compact
-        doc.moveDown(0.5);
+        // Ajouter la date sous la signature
+        doc.moveDown(1);
         const signatureDate = new Date().toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', { 
           year: 'numeric', 
           month: 'long', 
           day: 'numeric' 
         });
         
-        // Ajouter une ligne horizontale avant la date
+        // Ajouter une ligne horizontale pour la signature
+        const lineWidth = 200;
+        const lineX = (doc.page.width - lineWidth) / 2;
         const lineY = doc.y;
-        doc.moveTo(doc.page.margins.left + 300, lineY)
-           .lineTo(doc.page.width - doc.page.margins.right, lineY)
+        
+        doc.moveTo(lineX, lineY)
+           .lineTo(lineX + lineWidth, lineY)
+           .lineWidth(1)
            .stroke();
         
-        // Ajouter la date sous la ligne
-        doc.fontSize(9).text(`${texts.date}: ${signatureDate}`, doc.page.margins.left + 300, lineY + 3, { align: 'left' });
+        // Ajouter la date centrée sous la ligne
+        doc.moveDown(0.5);
+        doc.fontSize(11).font('Helvetica').text(`${texts.date}: ${signatureDate}`, {
+          align: 'center'
+        });
       } catch (error) {
         console.error('Erreur lors de l\'ajout de la signature au PDF:', error);
       }
