@@ -330,67 +330,94 @@ function generatePDF(clientData) {
       date: isFrench ? 'Date' : 'Date'
     };
     
-    // En-tête
-    doc.fontSize(20).text('RAIATEA RENT CAR', { align: 'center' });
-    doc.fontSize(16).text(texts.title, { align: 'center' });
-    doc.moveDown();
+    // Définir la police et la taille de base
+    doc.font('Helvetica').fontSize(12);
     
-    // ID du client
-    doc.fontSize(12).text(`ID: ${clientData.id}`, { align: 'right' });
-    doc.moveDown();
-    
-    // Conducteur principal
-    doc.fontSize(14).text(texts.mainDriver, { underline: true });
+    // Nom de l'entreprise - centré et en gras
+    doc.fontSize(22).font('Helvetica-Bold').text('RAIATEA RENT CAR', { align: 'center' });
     doc.moveDown(0.5);
-    doc.fontSize(10).text(`${texts.name}: ${clientData.main_driver_name}`);
-    doc.text(`${texts.firstname}: ${clientData.main_driver_firstname}`);
-    doc.text(`${texts.birthDate}: ${clientData.main_driver_birth_date}`);
-    doc.text(`${texts.birthPlace}: ${clientData.main_driver_birth_place}`);
-    doc.text(`${texts.nationality}: ${clientData.main_driver_nationality || ''}`);
     
-    if (clientData.main_driver_passport) {
-      doc.text(`${texts.passport}: ${clientData.main_driver_passport}`);
-      doc.text(`${texts.issueDate}: ${clientData.main_driver_passport_issue_date}`);
-      doc.text(`${texts.expiryDate}: ${clientData.main_driver_passport_expiry_date}`);
-    }
+    // Titre principal - centré et en gras
+    doc.fontSize(18).text(texts.title, { align: 'center' });
+    doc.moveDown();
     
-    doc.text(`${texts.licenseNumber}: ${clientData.main_driver_license_number || ''}`);
-    doc.text(`${texts.issueDate}: ${clientData.main_driver_license_issue_date || ''}`);
+    // Date du jour - aligné à droite
+    const today = new Date().toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    doc.fontSize(10).font('Helvetica').text(today, { align: 'right' });
+    doc.moveDown(0.5);
+    
+    // ID du client - centré et encadré
+    doc.fontSize(14).font('Helvetica-Bold');
+    const idText = `ID: ${clientData.id}`;
+    const idWidth = doc.widthOfString(idText) + 20; // Ajouter une marge
+    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const idX = (pageWidth - idWidth) / 2 + doc.page.margins.left;
+    
+    // Dessiner un rectangle autour de l'ID
+    doc.rect(idX, doc.y, idWidth, 25).stroke();
+    doc.text(idText, idX + 10, doc.y + 7, { width: idWidth - 20, align: 'center' });
+    doc.moveDown(1.5);
+    
+    // Revenir à la police normale pour le reste du document
+    doc.font('Helvetica').fontSize(12);
+    
+    // Conducteur principal - titre avec fond gris
+    doc.save();
+    doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
+    doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
+    doc.fillColor('#333333'); // Couleur du texte
+    doc.fontSize(14).font('Helvetica-Bold').text(texts.mainDriver, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
+    doc.restore();
+    doc.moveDown();
+    
+    // Informations du conducteur principal - format en deux colonnes
+    doc.fontSize(12).font('Helvetica');
+    const leftColumnWidth = 250;
+    const rightColumnWidth = pageWidth - leftColumnWidth;
+    
+    // Première ligne
+    doc.text(`${texts.name}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_name}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.firstname}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_firstname}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.birthDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_birth_date}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.birthPlace}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_birth_place}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.nationality}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_nationality || ''}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.phone}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_phone}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.email}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_email}`, { continued: false }).font('Helvetica');
+    doc.moveDown();
     doc.text(`${texts.expiryDate}: ${clientData.main_driver_license_validity_date || ''}`);
     doc.text(`${texts.issuePlace}: ${clientData.main_driver_license_issue_place || ''}`);
     
-    // Ajouter les images du permis de conduire du conducteur principal si disponibles
-    if (clientData.main_driver_license_front_data) {
-      doc.moveDown();
-      doc.fontSize(10).text(isFrench ? 'Photo du permis (recto):' : 'Driver\'s license photo (front):', { continued: false });
-      try {
-        doc.image(clientData.main_driver_license_front_data, {
-          fit: [250, 150],
-          align: 'center'
-        });
-      } catch (error) {
-        console.error('Erreur lors de l\'ajout de l\'image recto du permis au PDF:', error);
-      }
-    }
-    
-    if (clientData.main_driver_license_back_data) {
-      doc.moveDown();
-      doc.fontSize(10).text(isFrench ? 'Photo du permis (verso):' : 'Driver\'s license photo (back):', { continued: false });
-      try {
-        doc.image(clientData.main_driver_license_back_data, {
-          fit: [250, 150],
-          align: 'center'
-        });
-      } catch (error) {
-        console.error('Erreur lors de l\'ajout de l\'image verso du permis au PDF:', error);
-      }
-    }
-
+    // Note sur les photos du permis
     doc.moveDown();
-    doc.text(`${texts.address}: ${clientData.main_driver_address}`);
-    doc.text(`${texts.city}: ${clientData.main_driver_city}`);
-    doc.text(`${texts.postalCode}: ${clientData.main_driver_postal_code}`);
-    doc.text(`${texts.country}: ${clientData.main_driver_country}`);
+    doc.fontSize(10).text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
+    doc.moveDown();
+    
+    // Informations du permis de conduire
+    doc.moveDown(0.5);
+    doc.fontSize(12).font('Helvetica-Bold').text(isFrench ? 'Permis de conduire:' : 'Driver\'s License:', { underline: true });
+    doc.font('Helvetica');
+    doc.text(`${texts.licenseNumber}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_license_number || ''}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.issueDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_license_issue_date || ''}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.expiryDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_license_validity_date || ''}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.issuePlace}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_license_issue_place || ''}`, { continued: false }).font('Helvetica');
+    
+    // Note sur les photos du permis
+    doc.moveDown(0.5);
+    doc.fontSize(10).font('Helvetica-Oblique').text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
+    
+    // Adresse
+    doc.moveDown(0.5);
+    doc.fontSize(12).font('Helvetica-Bold').text(isFrench ? 'Adresse:' : 'Address:', { underline: true });
+    doc.font('Helvetica');
+    doc.text(`${texts.address}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_address}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.city}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_city}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.postalCode}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_postal_code}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.country}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_country}`, { continued: false }).font('Helvetica');
+    doc.moveDown();
     doc.text(`${texts.phone}: ${clientData.main_driver_phone}`);
     doc.text(`${texts.email}: ${clientData.main_driver_email}`);
     
@@ -402,82 +429,123 @@ function generatePDF(clientData) {
     
     // Conducteur additionnel
     if (clientData.has_additional_driver === 'true' || clientData.has_additional_driver === true) {
-      doc.fontSize(14).text(texts.additionalDriver, { underline: true });
+      doc.moveDown(1);
+      
+      // Titre du conducteur additionnel avec fond jaune
+      doc.save();
+      doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
+      doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
+      doc.fillColor('#333333'); // Couleur du texte
+      doc.fontSize(14).font('Helvetica-Bold').text(texts.additionalDriver, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
+      doc.restore();
+      doc.moveDown();
+      
+      // Informations du conducteur additionnel
+      doc.fontSize(12).font('Helvetica');
+      doc.text(`${texts.name}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_name}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.firstname}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_firstname}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.birthDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_birth_date}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.birthPlace}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_birth_place}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.nationality}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_nationality || ''}`, { continued: false }).font('Helvetica');
+      
+      // Informations du permis de conduire additionnel
       doc.moveDown(0.5);
-      doc.fontSize(10).text(`${texts.name}: ${clientData.additional_driver_name}`);
-      doc.text(`${texts.firstname}: ${clientData.additional_driver_firstname}`);
-      doc.text(`${texts.birthDate}: ${clientData.additional_driver_birth_date}`);
-      doc.text(`${texts.birthPlace}: ${clientData.additional_driver_birth_place}`);
-      doc.text(`${texts.nationality}: ${clientData.additional_driver_nationality || ''}`);
-      doc.text(`${texts.licenseNumber}: ${clientData.additional_driver_license_number || ''}`);
-      doc.text(`${texts.issueDate}: ${clientData.additional_driver_license_issue_date || ''}`);
-      doc.text(`${texts.expiryDate}: ${clientData.additional_driver_license_validity_date || ''}`);
-      doc.text(`${texts.issuePlace}: ${clientData.additional_driver_license_issue_place || ''}`);
+      doc.fontSize(12).font('Helvetica-Bold').text(isFrench ? 'Permis de conduire:' : 'Driver\'s License:', { underline: true });
+      doc.font('Helvetica');
+      doc.text(`${texts.licenseNumber}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_license_number || ''}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.issueDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_license_issue_date || ''}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.expiryDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_license_validity_date || ''}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.issuePlace}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_license_issue_place || ''}`, { continued: false }).font('Helvetica');
       
-      // Ajouter les images du permis de conduire du conducteur additionnel si disponibles
-      if (clientData.additional_driver_license_front_data) {
-        doc.moveDown();
-        doc.fontSize(10).text(isFrench ? 'Photo du permis (recto):' : 'Driver\'s license photo (front):', { continued: false });
-        try {
-          doc.image(clientData.additional_driver_license_front_data, {
-            fit: [250, 150],
-            align: 'center'
-          });
-        } catch (error) {
-          console.error('Erreur lors de l\'ajout de l\'image recto du permis additionnel au PDF:', error);
-        }
-      }
-      
-      if (clientData.additional_driver_license_back_data) {
-        doc.moveDown();
-        doc.fontSize(10).text(isFrench ? 'Photo du permis (verso):' : 'Driver\'s license photo (back):', { continued: false });
-        try {
-          doc.image(clientData.additional_driver_license_back_data, {
-            fit: [250, 150],
-            align: 'center'
-          });
-        } catch (error) {
-          console.error('Erreur lors de l\'ajout de l\'image verso du permis additionnel au PDF:', error);
-        }
-      }
-      
+      // Note sur les photos du permis
+      doc.moveDown(0.5);
+      doc.fontSize(10).font('Helvetica-Oblique').text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
       doc.moveDown();
     }
     
-    // Carte de crédit principale
-    doc.fontSize(14).text(texts.mainCreditCard, { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(10).text(`${texts.cardType}: ${clientData.main_driver_credit_card_type || ''}`);
-    doc.text(`${texts.cardNumber}: ${clientData.main_driver_credit_card || ''}`);
-    doc.text(`${texts.expiryDate}: ${clientData.main_driver_credit_card_expiry || ''}`);
-    doc.text(`${texts.cardHolder}: ${clientData.main_driver_name || ''} ${clientData.main_driver_firstname || ''}`);
+    // Informations sur le véhicule - titre avec fond jaune
+    doc.moveDown(1);
+    doc.save();
+    doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
+    doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
+    doc.fillColor('#333333'); // Couleur du texte
+    doc.fontSize(14).font('Helvetica-Bold').text(texts.vehicleInformation, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
+    doc.restore();
     doc.moveDown();
     
-    // Carte de crédit supplémentaire
+    // Informations du véhicule
+    doc.fontSize(12).font('Helvetica');
+    doc.text(`${texts.pickupDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.pickup_date}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.returnDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.return_date}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.pickupLocation}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.pickup_location}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.returnLocation}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.return_location}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.vehicleCategory}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.vehicle_category}`, { continued: false }).font('Helvetica');
+    doc.moveDown();
+    
+    // Carte de crédit principale - titre avec fond jaune
+    doc.moveDown(1);
+    doc.save();
+    doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
+    doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
+    doc.fillColor('#333333'); // Couleur du texte
+    doc.fontSize(14).font('Helvetica-Bold').text(texts.mainCreditCard, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
+    doc.restore();
+    doc.moveDown();
+    
+    // Informations de la carte de crédit principale
+    doc.fontSize(12).font('Helvetica');
+    doc.text(`${texts.cardType}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_credit_card_type || ''}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.cardNumber}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_credit_card || ''}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.expiryDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_credit_card_expiry || ''}`, { continued: false }).font('Helvetica');
+    doc.text(`${texts.cardHolder}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_name || ''} ${clientData.main_driver_firstname || ''}`, { continued: false }).font('Helvetica');
+    
+    // Carte de crédit additionnelle
     if (clientData.has_additional_card === 'true' || clientData.has_additional_card === true) {
-      doc.fontSize(14).text(texts.additionalCreditCard, { underline: true });
-      doc.moveDown(0.5);
-      doc.fontSize(10).text(`${texts.cardType}: ${clientData.additional_card_type || ''}`);
-      doc.text(`${texts.cardNumber}: ${clientData.additional_card_number || ''}`);
-      doc.text(`${texts.expiryDate}: ${clientData.additional_card_expiry_date || ''}`);
-      doc.text(`${texts.cardHolder}: ${clientData.additional_card_holder_name || ''}`);
+      doc.moveDown(1);
+      doc.save();
+      doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
+      doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
+      doc.fillColor('#333333'); // Couleur du texte
+      doc.fontSize(14).font('Helvetica-Bold').text(texts.additionalCreditCard, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
+      doc.restore();
       doc.moveDown();
+      
+      // Informations de la carte de crédit additionnelle
+      doc.fontSize(12).font('Helvetica');
+      doc.text(`${texts.cardType}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_card_type || ''}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.cardNumber}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_card_number || ''}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.expiryDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_card_expiry_date || ''}`, { continued: false }).font('Helvetica');
+      doc.text(`${texts.cardHolder}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_card_holder_name || ''}`, { continued: false }).font('Helvetica');
     }
     
     // Signature
-    doc.fontSize(14).text(texts.signature, { underline: true });
-    doc.moveDown(0.5);
-    doc.fontSize(10).text(`${texts.name}: ${clientData.signature_name}`);
-    doc.text(`${texts.date}: ${clientData.signature_date}`);
-    doc.moveDown();
-    
-    // Ajouter la signature si elle existe
     if (clientData.signature_data) {
+      doc.addPage();
+      
+      // Titre de la signature avec fond jaune
+      doc.save();
+      doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
+      doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
+      doc.fillColor('#333333'); // Couleur du texte
+      doc.fontSize(14).font('Helvetica-Bold').text(texts.signature, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
+      doc.restore();
+      doc.moveDown();
+      
       try {
+        // Ajouter la signature
         doc.image(clientData.signature_data, {
-          fit: [250, 100],
+          fit: [300, 150],
           align: 'center'
         });
+        
+        // Ajouter une ligne pour la date
+        doc.moveDown(2);
+        const signatureDate = new Date().toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+        doc.fontSize(10).text(isFrench ? `Date: ${signatureDate}` : `Date: ${signatureDate}`, { align: 'right' });
       } catch (error) {
         console.error('Erreur lors de l\'ajout de la signature au PDF:', error);
       }
@@ -511,17 +579,49 @@ app.post('/api/submit', async (req, res) => {
     clientData.id = timestamp + '-' + shortUuid;
     console.log('ID client généré:', clientData.id);
     
-    // Générer le PDF
-    console.log('Génération du PDF...');
-    const pdfPath = await generatePDF(clientData);
-    console.log('PDF généré avec succès:', pdfPath);
-    
-    // Répondre avec succès sans envoyer d'email pour le moment
-    console.log('Réponse envoyée au client avec succès');
+    // Répondre immédiatement au client pour éviter le blocage de l'interface
+    console.log('Envoi de la réponse au client...');
     res.status(200).json({ 
       message: 'Formulaire traité avec succès',
       id: clientData.id
     });
+    console.log('Réponse envoyée au client avec succès');
+    
+    // Optimiser les images avant de générer le PDF
+    console.log('Optimisation des images...');
+    // Fonction pour optimiser les images base64
+    const optimizeBase64Image = (base64String) => {
+      if (!base64String) return null;
+      try {
+        // Vérifier si c'est une image valide
+        if (!base64String.startsWith('data:image')) {
+          return base64String;
+        }
+        return base64String;
+      } catch (error) {
+        console.error('Erreur lors de l\'optimisation de l\'image:', error);
+        return base64String;
+      }
+    };
+    
+    // Optimiser les images du permis de conduire
+    if (clientData.main_driver_license_front_data) {
+      clientData.main_driver_license_front_data = optimizeBase64Image(clientData.main_driver_license_front_data);
+    }
+    if (clientData.main_driver_license_back_data) {
+      clientData.main_driver_license_back_data = optimizeBase64Image(clientData.main_driver_license_back_data);
+    }
+    if (clientData.additional_driver_license_front_data) {
+      clientData.additional_driver_license_front_data = optimizeBase64Image(clientData.additional_driver_license_front_data);
+    }
+    if (clientData.additional_driver_license_back_data) {
+      clientData.additional_driver_license_back_data = optimizeBase64Image(clientData.additional_driver_license_back_data);
+    }
+    
+    // Générer le PDF
+    console.log('Génération du PDF...');
+    const pdfPath = await generatePDF(clientData);
+    console.log('PDF généré avec succès:', pdfPath);
     
     // SOLUTION DEFINITIVE: Vérifier et créer les colonnes manquantes
     console.log('Préparation de la base de données pour l\'insertion...');
@@ -652,6 +752,60 @@ function insertClientData(clientData, pdfPath) {
           submissionDate: isFrench ? 'Date de soumission' : 'Submission date'
         };
         
+        // Préparer les pièces jointes pour l'email
+        const attachments = [
+          {
+            filename: `${clientData.id}_${clientData.main_driver_name}_${clientData.main_driver_firstname}.pdf`,
+            path: pdfPath
+          }
+        ];
+        
+        // Ajouter les photos du permis de conduire en pièces jointes si disponibles
+        if (clientData.main_driver_license_front_data) {
+          const frontImageData = clientData.main_driver_license_front_data.split(',')[1];
+          if (frontImageData) {
+            attachments.push({
+              filename: `${clientData.id}_permis_conducteur_principal_recto.jpg`,
+              content: frontImageData,
+              encoding: 'base64'
+            });
+          }
+        }
+        
+        if (clientData.main_driver_license_back_data) {
+          const backImageData = clientData.main_driver_license_back_data.split(',')[1];
+          if (backImageData) {
+            attachments.push({
+              filename: `${clientData.id}_permis_conducteur_principal_verso.jpg`,
+              content: backImageData,
+              encoding: 'base64'
+            });
+          }
+        }
+        
+        // Ajouter les photos du permis du conducteur additionnel si disponibles
+        if (clientData.additional_driver_license_front_data) {
+          const frontImageData = clientData.additional_driver_license_front_data.split(',')[1];
+          if (frontImageData) {
+            attachments.push({
+              filename: `${clientData.id}_permis_conducteur_additionnel_recto.jpg`,
+              content: frontImageData,
+              encoding: 'base64'
+            });
+          }
+        }
+        
+        if (clientData.additional_driver_license_back_data) {
+          const backImageData = clientData.additional_driver_license_back_data.split(',')[1];
+          if (backImageData) {
+            attachments.push({
+              filename: `${clientData.id}_permis_conducteur_additionnel_verso.jpg`,
+              content: backImageData,
+              encoding: 'base64'
+            });
+          }
+        }
+        
         // Envoi de l'email
         const mailOptions = {
           // Pour SendGrid, utiliser l'adresse vérifiée comme expéditeur
@@ -666,13 +820,10 @@ ${emailTexts.firstname}: ${clientData.main_driver_firstname}
 ${emailTexts.email}: ${clientData.main_driver_email}
 ${emailTexts.phone}: ${clientData.main_driver_phone}
 ${emailTexts.submissionDate}: ${new Date().toLocaleString()}
+
+Les photos des permis de conduire sont jointes à cet email.
 `,
-          attachments: [
-            {
-              filename: `${clientData.id}_${clientData.main_driver_name}_${clientData.main_driver_firstname}.pdf`,
-              path: pdfPath
-            }
-          ]
+          attachments: attachments
         };
         
         // Définir un délai d'expiration pour l'envoi d'email

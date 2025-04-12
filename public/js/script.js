@@ -162,10 +162,6 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        if (!validateForm()) {
-            return;
-        }
-        
         // Vérifier si la signature est vide
         if (signaturePad.isEmpty()) {
             alert(languageSelect.value === 'fr' ? 
@@ -174,29 +170,65 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Enregistrer les données de la signature
-        signatureDataInput.value = signaturePad.toDataURL();
-        
-        const formData = new FormData(form);
-        const formDataObj = {};
-        
-        formData.forEach((value, key) => {
-            if (key === 'has_additional_driver' || key === 'has_additional_credit_card' || 
-                key === 'accept_terms' || key === 'accept_data_processing') {
-                formDataObj[key] = true; // Les cases cochées sont toujours true (les non-cochées ne sont pas incluses)
-            } else {
-                formDataObj[key] = value;
-            }
-        });
-        
-        // Ajout des champs manquants pour les cases non cochées
-        if (!formData.has('has_additional_driver')) {
-            formDataObj.has_additional_driver = false;
+        // Vérifier si les conditions ont été acceptées
+        if (!document.getElementById('accept-conditions').checked) {
+            alert(languageSelect.value === 'fr' ? 
+                'Veuillez accepter les conditions de location avant de soumettre le formulaire.' : 
+                'Please accept the rental conditions before submitting the form.');
+            return;
         }
         
-        if (!formData.has('has_additional_credit_card')) {
-            formDataObj.has_additional_credit_card = false;
-        }
+        // Optimiser les images avant l'envoi
+        const optimizeImages = () => {
+            // Fonction pour compresser une image base64
+            const compressImage = (base64, maxWidth = 800) => {
+                return new Promise((resolve) => {
+                    if (!base64 || !base64.startsWith('data:image')) {
+                        resolve(base64);
+                        return;
+                    }
+                    
+                    const img = new Image();
+                    img.onload = () => {
+                        // Si l'image est déjà petite, ne pas la compresser
+                        if (img.width <= maxWidth) {
+                            resolve(base64);
+                            return;
+                        }
+                        
+                        const canvas = document.createElement('canvas');
+                        const ratio = maxWidth / img.width;
+                        canvas.width = maxWidth;
+                        canvas.height = img.height * ratio;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // Qualité de compression (0.7 = 70%)
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        resolve(compressedBase64);
+                    };
+                    img.onerror = () => resolve(base64);
+                    img.src = base64;
+                });
+            };
+            
+            // Compresser toutes les images
+            const promises = [];
+            const hiddenFields = document.querySelectorAll('input[type="hidden"][name$="_data"]');
+            
+            hiddenFields.forEach(field => {
+                if (field.value && field.value.startsWith('data:image')) {
+                    promises.push(
+                        compressImage(field.value).then(compressed => {
+                            field.value = compressed;
+                        })
+                    );
+                }
+            });
+            
+            return Promise.all(promises);
+        };
         
         // Afficher un message de chargement
         const submitButton = this.querySelector('button[type="submit"]');
@@ -207,53 +239,96 @@ document.addEventListener('DOMContentLoaded', function() {
         // Masquer le message de succès s'il était visible
         successMessage.classList.add('hidden');
         
-        console.log('Envoi des données au serveur:', formDataObj);
-        
-        // Envoyer les données au serveur
-        fetch('/api/submit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formDataObj)
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.error || 'Erreur serveur: ' + response.status);
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Réponse du serveur:', data);
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            // Affichage du message de succès seulement si on a un ID valide
-            if (data && data.id) {
-                form.style.display = 'none';
-                successMessage.classList.remove('hidden');
+        // Optimiser les images avant l'envoi
+        optimizeImages().then(() => {
+            // Récupérer les données du formulaire
+            const formData = new FormData(form);
+            const formDataObj = {};
+            
+            // Convertir FormData en objet
+            formData.forEach((value, key) => {
+                formDataObj[key] = value;
+            });
+            
+            // Ajouter la signature
+            formDataObj.signature_data = signaturePad.toDataURL();
+            
+            // Ajouter la langue sélectionnée
+            formDataObj.language = languageSelect.value;
+            
+            console.log('Envoi des données au serveur...');
+            
+            // Définir un timeout pour l'envoi
+            const fetchTimeout = 60000; // 60 secondes
+            
+            // Créer une promesse avec timeout
+            const fetchWithTimeout = (url, options, timeout) => {
+                return Promise.race([
+                    fetch(url, options),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), timeout)
+                    )
+                ]);
+            };
+            
+            // Envoyer les données au serveur avec timeout
+            fetchWithTimeout('/api/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formDataObj)
+            }, fetchTimeout)
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Erreur serveur: ' + response.status);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Réponse du serveur:', data);
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                // Affichage du message de succès seulement si on a un ID valide
+                if (data && data.id) {
+                    form.style.display = 'none';
+                    successMessage.classList.remove('hidden');
+                    successMessage.style.display = 'block';
+                    alert(languageSelect.value === 'fr' ? 
+                        'Formulaire soumis avec succès! ID: ' + data.id : 
+                        'Form submitted successfully! ID: ' + data.id);
+                    signaturePad.clear();
+                    
+                    // Réinitialiser les champs de téléchargement d'images
+                    document.querySelectorAll('input[type="file"]').forEach(input => {
+                        input.value = '';
+                    });
+                    
+                    // Réinitialiser les aperçus d'images
+                    document.querySelectorAll('.image-preview-container img').forEach(img => {
+                        img.src = '';
+                        img.style.display = 'none';
+                    });
+                } else {
+                    throw new Error(languageSelect.value === 'fr' ? 
+                        'Réponse du serveur invalide' : 
+                        'Invalid server response');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
                 alert(languageSelect.value === 'fr' ? 
-                    'Formulaire soumis avec succès! ID: ' + data.id : 
-                    'Form submitted successfully! ID: ' + data.id);
-                signaturePad.clear();
-            } else {
-                throw new Error(languageSelect.value === 'fr' ? 
-                    'Réponse du serveur invalide' : 
-                    'Invalid server response');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            alert(languageSelect.value === 'fr' ? 
-                'Une erreur est survenue lors de l\'envoi du formulaire: ' + error.message : 
-                'An error occurred while submitting the form: ' + error.message);
-        })
-        .finally(() => {
-            // Rétablir le bouton
-            submitButton.textContent = originalButtonText;
-            submitButton.disabled = false;
+                    'Une erreur est survenue lors de l\'envoi du formulaire: ' + error.message : 
+                    'An error occurred while submitting the form: ' + error.message);
+            })
+            .finally(() => {
+                // Rétablir le bouton
+                submitButton.textContent = originalButtonText;
+                submitButton.disabled = false;
+            });
         });
     });
     
