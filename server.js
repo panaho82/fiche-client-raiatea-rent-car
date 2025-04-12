@@ -446,23 +446,6 @@ app.post('/api/submit', async (req, res) => {
       if (missingColumns.length > 0) {
         console.log('Colonnes manquantes détectées:', missingColumns);
         
-        // Ajouter les colonnes manquantes
-        const alterTablePromises = missingColumns.map(col => {
-          return new Promise((resolve, reject) => {
-            const sql = `ALTER TABLE clients ADD COLUMN ${col} TEXT`;
-            console.log('Exécution de:', sql);
-            db.run(sql, (err) => {
-              if (err) {
-                console.error(`Erreur lors de l'ajout de la colonne ${col}:`, err);
-                reject(err);
-              } else {
-                console.log(`Colonne ${col} ajoutée avec succès`);
-                resolve();
-              }
-            });
-          });
-        });
-        
         // Exécuter toutes les requêtes ALTER TABLE de façon séquentielle
         let columnIndex = 0;
         const addNextColumn = () => {
