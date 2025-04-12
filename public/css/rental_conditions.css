@@ -33,7 +33,7 @@
 .rental-conditions-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.5s ease;
+    transition: max-height 1s ease;
     background-color: #f9f9f9;
     border: 1px solid #ddd;
     border-top: none;
@@ -41,7 +41,7 @@
 }
 
 .rental-conditions-content.show {
-    max-height: 500px;
+    max-height: 2000px; /* Augmenter la hauteur maximale pour s'assurer que tout le contenu est visible */
     overflow-y: auto;
     padding: 15px;
 }

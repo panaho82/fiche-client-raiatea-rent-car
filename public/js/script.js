@@ -58,14 +58,30 @@ document.addEventListener('DOMContentLoaded', function() {
     setLanguage(languageSelect.value);
     
     // Gérer l'affichage des conditions de location
-    rentalConditionsToggle.addEventListener('click', function() {
-        this.classList.toggle('active');
-        if (rentalConditionsContent.classList.contains('show')) {
-            rentalConditionsContent.classList.remove('show');
-        } else {
-            rentalConditionsContent.classList.add('show');
+    if (rentalConditionsToggle && rentalConditionsContent) {
+        // S'assurer que les éléments existent avant d'ajouter des écouteurs d'événements
+        rentalConditionsToggle.addEventListener('click', function(e) {
+            e.preventDefault(); // Empêcher le comportement par défaut du bouton
+            this.classList.toggle('active');
+            
+            // Basculer l'affichage du contenu
+            if (rentalConditionsContent.classList.contains('show')) {
+                rentalConditionsContent.classList.remove('show');
+            } else {
+                rentalConditionsContent.classList.add('show');
+            }
+            
+            // Log pour débogage
+            console.log('Bouton conditions cliqué, état de la classe show:', rentalConditionsContent.classList.contains('show'));
+        });
+        
+        // Initialiser le contenu des conditions
+        if (rentalConditionsText && typeof rentalConditions !== 'undefined') {
+            rentalConditionsText.textContent = rentalConditions[languageSelect.value];
         }
-    });
+    } else {
+        console.error('Les éléments des conditions de location n\'ont pas été trouvés dans le DOM');
+    }
     
     // Ajouter des placeholders aux conteneurs de prévisualisation
     const placeholderTextFr = 'Aperçu de l\'image';
