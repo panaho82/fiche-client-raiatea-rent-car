@@ -503,18 +503,39 @@ function insertClientData(clientData, pdfPath) {
       // Tenter d'envoyer l'email en arrière-plan
       try {
         // Configurer le transporteur d'email
-        const transporter = nodemailer.createTransport({
-          host: process.env.EMAIL_HOST,
-          port: process.env.EMAIL_PORT,
-          secure: false,
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-          },
-          tls: {
-            rejectUnauthorized: false
-          }
-        });
+        let transporterConfig;
+        
+        // Vérifier si nous utilisons SendGrid (recommandé pour Render)
+        if (process.env.USE_SENDGRID === 'true' && process.env.SENDGRID_API_KEY) {
+          // Configuration pour SendGrid
+          transporterConfig = {
+            service: 'SendGrid',
+            auth: {
+              user: 'apikey',
+              pass: process.env.SENDGRID_API_KEY
+            }
+          };
+        } else {
+          // Configuration SMTP standard
+          transporterConfig = {
+            host: process.env.EMAIL_HOST,
+            port: process.env.EMAIL_PORT,
+            secure: false,
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS
+            },
+            tls: {
+              rejectUnauthorized: false
+            },
+            // Augmenter le délai d'attente pour éviter les timeouts
+            connectionTimeout: 60000, // 60 secondes
+            greetingTimeout: 30000,   // 30 secondes
+            socketTimeout: 60000      // 60 secondes
+          };
+        }
+        
+        const transporter = nodemailer.createTransport(transporterConfig);
         
         // Envoi de l'email
         const mailOptions = {
@@ -538,9 +559,21 @@ Date de soumission: ${new Date().toLocaleString()}
           ]
         };
         
+        // Définir un délai d'expiration pour l'envoi d'email
+        const emailTimeout = setTimeout(() => {
+          console.error('Erreur lors de l\'envoi de l\'email: Délai d\'expiration dépassé');
+          // Ne pas bloquer le processus si l'email échoue
+        }, 30000); // 30 secondes de timeout
+        
         transporter.sendMail(mailOptions, (error, info) => {
+          // Annuler le timeout car la réponse est arrivée
+          clearTimeout(emailTimeout);
+          
           if (error) {
             console.error('Erreur lors de l\'envoi de l\'email:', error);
+            // Enregistrer l'erreur dans un fichier de log ou une base de données
+            // pour un suivi ultérieur si nécessaire
+            console.log('Les données client ont été enregistrées malgré l\'erreur d\'email');
           } else {
             console.log('Email envoyé avec succès:', info.response);
           }
