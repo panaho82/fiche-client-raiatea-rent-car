@@ -415,126 +415,130 @@ app.post('/api/submit', async (req, res) => {
     clientData.id = timestamp + '_' + uuid;
     console.log('ID client généré:', clientData.id);
     
-    try {
-      // Générer le PDF
-      console.log('Génération du PDF...');
-      const pdfPath = await generatePDF(clientData);
-      console.log('PDF généré avec succès:', pdfPath);
+    // Générer le PDF
+    console.log('Génération du PDF...');
+    const pdfPath = await generatePDF(clientData);
+    console.log('PDF généré avec succès:', pdfPath);
+    
+    // Répondre avec succès sans envoyer d'email pour le moment
+    console.log('Réponse envoyée au client avec succès');
+    res.status(200).json({ 
+      message: 'Formulaire traité avec succès',
+      id: clientData.id
+    });
+    
+    // SOLUTION DEFINITIVE: Vérifier et créer les colonnes manquantes
+    console.log('Préparation de la base de données pour l\'insertion...');
+    // Récupérer la structure actuelle de la table
+    db.all("PRAGMA table_info(clients)", [], (err, tableInfo) => {
+      if (err) {
+        console.error('Erreur lors de la récupération de la structure de la table:', err);
+        return;
+      }
       
-      // Répondre avec succès sans envoyer d'email pour le moment
-      console.log('Réponse envoyée au client avec succès');
-      res.status(200).json({ 
-        message: 'Formulaire traité avec succès',
-        id: clientData.id
-      });
+      // Créer un ensemble de colonnes existantes
+      const existingColumns = new Set(tableInfo.map(col => col.name));
+      console.log('Colonnes existantes:', Array.from(existingColumns));
       
-      // SOLUTION DEFINITIVE: Vérifier et créer les colonnes manquantes
-      console.log('Préparation de la base de données pour l\'insertion...');
-      // Récupérer la structure actuelle de la table
-      db.all("PRAGMA table_info(clients)", [], (err, tableInfo) => {
-        if (err) {
-          console.error('Erreur lors de la récupération de la structure de la table:', err);
-          return;
-        }
+      // Identifier les colonnes manquantes
+      const missingColumns = Object.keys(clientData).filter(col => !existingColumns.has(col));
+      
+      if (missingColumns.length > 0) {
+        console.log('Colonnes manquantes détectées:', missingColumns);
         
-        // Créer un ensemble de colonnes existantes
-        const existingColumns = new Set(tableInfo.map(col => col.name));
-        console.log('Colonnes existantes:', Array.from(existingColumns));
-        
-        // Identifier les colonnes manquantes
-        const missingColumns = Object.keys(clientData).filter(col => !existingColumns.has(col));
-        
-        if (missingColumns.length > 0) {
-          console.log('Colonnes manquantes détectées:', missingColumns);
-          
-          // Ajouter les colonnes manquantes
-          const alterTablePromises = missingColumns.map(col => {
-            return new Promise((resolve, reject) => {
-              const sql = `ALTER TABLE clients ADD COLUMN ${col} TEXT`;
-              console.log('Exécution de:', sql);
-              db.run(sql, (err) => {
-                if (err) {
-                  console.error(`Erreur lors de l'ajout de la colonne ${col}:`, err);
-                  reject(err);
-                } else {
-                  console.log(`Colonne ${col} ajoutée avec succès`);
-                  resolve();
-                }
-              });
-            });
-          });
-          
-          // Exécuter toutes les requêtes ALTER TABLE de façon séquentielle
-          let columnIndex = 0;
-          const addNextColumn = () => {
-            if (columnIndex >= missingColumns.length) {
-              // Toutes les colonnes ont été traitées, insérer les données
-              insertClientData(clientData, pdfPath);
-              return;
-            }
-            
-            const col = missingColumns[columnIndex];
+        // Ajouter les colonnes manquantes
+        const alterTablePromises = missingColumns.map(col => {
+          return new Promise((resolve, reject) => {
             const sql = `ALTER TABLE clients ADD COLUMN ${col} TEXT`;
             console.log('Exécution de:', sql);
-            
             db.run(sql, (err) => {
               if (err) {
                 console.error(`Erreur lors de l'ajout de la colonne ${col}:`, err);
+                reject(err);
               } else {
                 console.log(`Colonne ${col} ajoutée avec succès`);
-              }
-              
-              // Passer à la colonne suivante quoi qu'il arrive
-              columnIndex++;
-              addNextColumn();
-            });
-          };
-          
-          // Démarrer le processus d'ajout de colonnes
-          addNextColumn();
-        } else {
-          // Pas de colonnes manquantes, insérer directement
-          insertClientData(clientData, pdfPath);
-        }
-      });
-      
-      // Fonction pour insérer les données client
-      function insertClientData(clientData, pdfPath) {
-        console.log('Insertion des données dans la base de données...');
-        const placeholders = Object.keys(clientData).map(() => '?').join(',');
-        const columns = Object.keys(clientData).join(',');
-        const values = Object.values(clientData);
-        
-        const sql = `INSERT INTO clients (${columns}) VALUES (${placeholders})`;
-        
-        db.run(sql, values, function(err) {
-        if (err) {
-          console.error('Erreur lors de l\'insertion dans la base de données:', err.message);
-        } else {
-          console.log('Données insérées dans la base de données avec succès');
-          
-          // Tenter d'envoyer l'email en arrière-plan
-          try {
-            // Configurer le transporteur d'email
-            const transporter = nodemailer.createTransport({
-              host: process.env.EMAIL_HOST,
-              port: process.env.EMAIL_PORT,
-              secure: false,
-              auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-              },
-              tls: {
-                rejectUnauthorized: false
+                resolve();
               }
             });
+          });
+        });
+        
+        // Exécuter toutes les requêtes ALTER TABLE de façon séquentielle
+        let columnIndex = 0;
+        const addNextColumn = () => {
+          if (columnIndex >= missingColumns.length) {
+            // Toutes les colonnes ont été traitées, insérer les données
+            insertClientData(clientData, pdfPath);
+            return;
+          }
+          
+          const col = missingColumns[columnIndex];
+          const sql = `ALTER TABLE clients ADD COLUMN ${col} TEXT`;
+          console.log('Exécution de:', sql);
+          
+          db.run(sql, (err) => {
+            if (err) {
+              console.error(`Erreur lors de l'ajout de la colonne ${col}:`, err);
+            } else {
+              console.log(`Colonne ${col} ajoutée avec succès`);
+            }
             
-            // Envoi de l'email
-            const mailOptions = {
-              from: process.env.EMAIL_USER,
-              to: process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
-              subject: `Nouvelle fiche client - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})`,
-              text: `Veuillez trouver ci-joint la fiche client de ${clientData.main_driver_name} ${clientData.main_driver_firstname}.
+            // Passer à la colonne suivante quoi qu'il arrive
+            columnIndex++;
+            addNextColumn();
+          });
+        };
+        
+        // Démarrer le processus d'ajout de colonnes
+        addNextColumn();
+      } else {
+        // Pas de colonnes manquantes, insérer directement
+        insertClientData(clientData, pdfPath);
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lors du traitement de la requête:', error);
+    res.status(500).json({ error: 'Erreur lors du traitement de la requête' });
+  }
+});
+
+// Fonction pour insérer les données client
+function insertClientData(clientData, pdfPath) {
+  console.log('Insertion des données dans la base de données...');
+  const placeholders = Object.keys(clientData).map(() => '?').join(',');
+  const columns = Object.keys(clientData).join(',');
+  const values = Object.values(clientData);
+  
+  const sql = `INSERT INTO clients (${columns}) VALUES (${placeholders})`;
+  
+  db.run(sql, values, function(err) {
+    if (err) {
+      console.error('Erreur lors de l\'insertion dans la base de données:', err.message);
+    } else {
+      console.log('Données insérées dans la base de données avec succès');
+      
+      // Tenter d'envoyer l'email en arrière-plan
+      try {
+        // Configurer le transporteur d'email
+        const transporter = nodemailer.createTransport({
+          host: process.env.EMAIL_HOST,
+          port: process.env.EMAIL_PORT,
+          secure: false,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+        
+        // Envoi de l'email
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
+          subject: `Nouvelle fiche client - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})`,
+          text: `Veuillez trouver ci-joint la fiche client de ${clientData.main_driver_name} ${clientData.main_driver_firstname}.
 
 ID Client: ${clientData.id}
 Nom: ${clientData.main_driver_name}
@@ -543,35 +547,27 @@ Email: ${clientData.main_driver_email}
 Téléphone: ${clientData.main_driver_phone}
 Date de soumission: ${new Date().toLocaleString()}
 `,
-              attachments: [
-                {
-                  filename: `${clientData.id}_${clientData.main_driver_name}_${clientData.main_driver_firstname}.pdf`,
-                  path: pdfPath
-                }
-              ]
-            };
-            
-            transporter.sendMail(mailOptions, (error, info) => {
-              if (error) {
-                console.error('Erreur lors de l\'envoi de l\'email:', error);
-              } else {
-                console.log('Email envoyé avec succès:', info.response);
-              }
-            });
-          } catch (emailError) {
-            console.error('Erreur lors de la configuration de l\'email:', emailError);
+          attachments: [
+            {
+              filename: `${clientData.id}_${clientData.main_driver_name}_${clientData.main_driver_firstname}.pdf`,
+              path: pdfPath
+            }
+          ]
+        };
+        
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error('Erreur lors de l\'envoi de l\'email:', error);
+          } else {
+            console.log('Email envoyé avec succès:', info.response);
           }
-        }
-      });
-    } catch (pdfError) {
-      console.error('Erreur lors de la génération du PDF:', pdfError);
-      return res.status(500).json({ error: 'Erreur lors de la génération du PDF' });
+        });
+      } catch (emailError) {
+        console.error('Erreur lors de la configuration de l\'email:', emailError);
+      }
     }
-  } catch (error) {
-    console.error('Erreur lors du traitement de la requête:', error);
-    res.status(500).json({ error: 'Erreur lors du traitement de la requête' });
-  }
-});
+  });
+}
 
 // API pour récupérer tous les clients
 app.get('/api/clients', (req, res) => {

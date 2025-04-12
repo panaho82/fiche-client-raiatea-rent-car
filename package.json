@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Application web pour les fiches client de RAIATEA RENT CAR",
   "main": "server.js",
+  "engines": {
+    "node": "16.x"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
