@@ -11,6 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearSignatureButton = document.getElementById('clear-signature');
     const signatureDataInput = document.getElementById('signature-data');
     
+    // Éléments pour les conditions de location
+    const rentalConditionsToggle = document.getElementById('rental-conditions-toggle');
+    const rentalConditionsContent = document.getElementById('rental-conditions-content');
+    const rentalConditionsText = document.getElementById('rental-conditions-text');
+    
     // S'assurer que le message de succès est caché et le formulaire visible au chargement
     successMessage.classList.add('hidden');
     successMessage.style.display = 'none';
@@ -36,6 +41,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialiser la langue
     setLanguage(languageSelect.value);
+    
+    // Gérer l'affichage des conditions de location
+    rentalConditionsToggle.addEventListener('click', function() {
+        this.classList.toggle('active');
+        if (rentalConditionsContent.classList.contains('show')) {
+            rentalConditionsContent.classList.remove('show');
+        } else {
+            rentalConditionsContent.classList.add('show');
+        }
+    });
     
     // Afficher/masquer la section conducteur additionnel
     hasAdditionalDriverCheckbox.addEventListener('change', function() {
@@ -157,6 +172,20 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.lang-' + lang).forEach(el => {
             el.style.display = 'block';
         });
+        
+        // Mettre à jour les conditions de location selon la langue
+        if (rentalConditionsText) {
+            rentalConditionsText.textContent = rentalConditions[lang];
+        }
+        
+        // Mettre à jour le texte du bouton des conditions
+        if (rentalConditionsToggle) {
+            const toggleText = lang === 'fr' ? 'Afficher les conditions de location' : 'Show rental conditions';
+            const toggleSpan = rentalConditionsToggle.querySelector(`.lang-${lang}`);
+            if (toggleSpan) {
+                toggleSpan.style.display = 'block';
+            }
+        }
     }
     
     function toggleSection(isVisible, section) {

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAIATEA RENT CAR - Fiche Client</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/rental_conditions.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -309,6 +310,31 @@
                 </div>
             </section>
 
+            <!-- Section Conditions de location -->
+            <section class="form-section">
+                <h3 class="lang-fr">Conditions de location</h3>
+                <h3 class="lang-en">Rental conditions</h3>
+
+                <div class="rental-conditions-container">
+                    <button type="button" class="rental-conditions-toggle" id="rental-conditions-toggle">
+                        <span class="lang-fr">Afficher les conditions de location</span>
+                        <span class="lang-en">Show rental conditions</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="rental-conditions-content" id="rental-conditions-content">
+                        <div class="rental-conditions-text" id="rental-conditions-text"></div>
+                    </div>
+                </div>
+
+                <div class="form-row checkbox-row">
+                    <div class="form-group">
+                        <input type="checkbox" id="accept-conditions" name="accept_conditions" required>
+                        <label for="accept-conditions" class="lang-fr">J'ai lu et j'accepte les conditions de location</label>
+                        <label for="accept-conditions" class="lang-en">I have read and accept the rental conditions</label>
+                    </div>
+                </div>
+            </section>
+
             <!-- Section Traitement des données personnelles -->
             <section class="form-section">
                 <h3 class="lang-fr">Traitement des données personnelles</h3>
@@ -385,6 +411,7 @@
     </div>
 
     <script src="js/signature_pad.min.js?v=1.0.1"></script>
+    <script src="js/rental_conditions.js?v=1.0.1"></script>
     <script src="js/script.js?v=1.0.1"></script>
 </body>
 </html>
