@@ -296,9 +296,43 @@ function generatePDF(clientData) {
     // Pipe le PDF vers le stream
     doc.pipe(pdfStream);
     
+    // Déterminer la langue
+    const isFrench = clientData.language === 'fr';
+    
+    // Textes selon la langue
+    const texts = {
+      title: isFrench ? 'Fiche de renseignements client' : 'Client Information Form',
+      mainDriver: isFrench ? 'Conducteur Principal' : 'Main Driver',
+      additionalDriver: isFrench ? 'Conducteur Additionnel' : 'Additional Driver',
+      mainCreditCard: isFrench ? 'Carte de Crédit Principale' : 'Main Credit Card',
+      additionalCreditCard: isFrench ? 'Carte de Crédit Supplémentaire' : 'Additional Credit Card',
+      name: isFrench ? 'Nom' : 'Name',
+      firstname: isFrench ? 'Prénom' : 'Firstname',
+      birthDate: isFrench ? 'Date de naissance' : 'Birth date',
+      birthPlace: isFrench ? 'Lieu de naissance' : 'Birth place',
+      nationality: isFrench ? 'Nationalité' : 'Nationality',
+      passport: isFrench ? 'N° Passeport' : 'Passport No.',
+      issueDate: isFrench ? 'Date d\'\u00e9mission' : 'Issue date',
+      expiryDate: isFrench ? 'Date d\'expiration' : 'Expiry date',
+      licenseNumber: isFrench ? 'N° Permis de conduire' : 'Driver\'s license number',
+      issuePlace: isFrench ? 'Lieu d\'\u00e9mission' : 'Issue place',
+      address: isFrench ? 'Adresse' : 'Address',
+      city: isFrench ? 'Ville' : 'City',
+      postalCode: isFrench ? 'Code Postal' : 'Postal Code',
+      country: isFrench ? 'Pays' : 'Country',
+      phone: isFrench ? 'Téléphone' : 'Phone',
+      email: isFrench ? 'Email' : 'Email',
+      hotel: isFrench ? 'Hôtel / Pension / Bateau' : 'Hotel / Guesthouse / Boat',
+      cardType: isFrench ? 'Type de carte' : 'Card type',
+      cardNumber: isFrench ? 'Numéro de carte' : 'Card number',
+      cardHolder: isFrench ? 'Nom du titulaire' : 'Card holder name',
+      signature: isFrench ? 'Signature' : 'Signature',
+      date: isFrench ? 'Date' : 'Date'
+    };
+    
     // En-tête
     doc.fontSize(20).text('RAIATEA RENT CAR', { align: 'center' });
-    doc.fontSize(16).text('Fiche de renseignements client', { align: 'center' });
+    doc.fontSize(16).text(texts.title, { align: 'center' });
     doc.moveDown();
     
     // ID du client
@@ -306,78 +340,79 @@ function generatePDF(clientData) {
     doc.moveDown();
     
     // Conducteur principal
-    doc.fontSize(14).text('Conducteur Principal', { underline: true });
+    doc.fontSize(14).text(texts.mainDriver, { underline: true });
     doc.moveDown(0.5);
-    doc.fontSize(10).text(`Nom: ${clientData.main_driver_name}`);
-    doc.text(`Prénom: ${clientData.main_driver_firstname}`);
-    doc.text(`Date de naissance: ${clientData.main_driver_birth_date}`);
-    doc.text(`Lieu de naissance: ${clientData.main_driver_birth_place}`);
-    doc.text(`Nationalité: ${clientData.main_driver_nationality}`);
+    doc.fontSize(10).text(`${texts.name}: ${clientData.main_driver_name}`);
+    doc.text(`${texts.firstname}: ${clientData.main_driver_firstname}`);
+    doc.text(`${texts.birthDate}: ${clientData.main_driver_birth_date}`);
+    doc.text(`${texts.birthPlace}: ${clientData.main_driver_birth_place}`);
+    doc.text(`${texts.nationality}: ${clientData.main_driver_nationality || ''}`);
     
     if (clientData.main_driver_passport) {
-      doc.text(`N° Passeport: ${clientData.main_driver_passport}`);
-      doc.text(`Date d'émission: ${clientData.main_driver_passport_issue_date}`);
-      doc.text(`Date d'expiration: ${clientData.main_driver_passport_expiry_date}`);
+      doc.text(`${texts.passport}: ${clientData.main_driver_passport}`);
+      doc.text(`${texts.issueDate}: ${clientData.main_driver_passport_issue_date}`);
+      doc.text(`${texts.expiryDate}: ${clientData.main_driver_passport_expiry_date}`);
     }
     
-    doc.text(`N° Permis de conduire: ${clientData.main_driver_license}`);
-    doc.text(`Date d'émission: ${clientData.main_driver_license_issue_date}`);
-    doc.text(`Date d'expiration: ${clientData.main_driver_license_expiry_date}`);
-    doc.text(`Lieu d'émission: ${clientData.main_driver_license_issue_place}`);
-    doc.text(`Adresse: ${clientData.main_driver_address}`);
-    doc.text(`Ville: ${clientData.main_driver_city}`);
-    doc.text(`Code Postal: ${clientData.main_driver_postal_code}`);
-    doc.text(`Pays: ${clientData.main_driver_country}`);
-    doc.text(`Téléphone: ${clientData.main_driver_phone}`);
-    doc.text(`Email: ${clientData.main_driver_email}`);
+    doc.text(`${texts.licenseNumber}: ${clientData.main_driver_license_number || ''}`);
+    doc.text(`${texts.issueDate}: ${clientData.main_driver_license_issue_date || ''}`);
+    doc.text(`${texts.expiryDate}: ${clientData.main_driver_license_validity_date || ''}`);
+    doc.text(`${texts.issuePlace}: ${clientData.main_driver_license_issue_place || ''}`);
+
+    doc.text(`${texts.address}: ${clientData.main_driver_address}`);
+    doc.text(`${texts.city}: ${clientData.main_driver_city}`);
+    doc.text(`${texts.postalCode}: ${clientData.main_driver_postal_code}`);
+    doc.text(`${texts.country}: ${clientData.main_driver_country}`);
+    doc.text(`${texts.phone}: ${clientData.main_driver_phone}`);
+    doc.text(`${texts.email}: ${clientData.main_driver_email}`);
     
     if (clientData.main_driver_hotel) {
-      doc.text(`Hôtel / Pension / Bateau: ${clientData.main_driver_hotel}`);
+      doc.text(`${texts.hotel}: ${clientData.main_driver_hotel}`);
     }
     
     doc.moveDown();
     
     // Conducteur additionnel
     if (clientData.has_additional_driver === 'true' || clientData.has_additional_driver === true) {
-      doc.fontSize(14).text('Conducteur Additionnel', { underline: true });
+      doc.fontSize(14).text(texts.additionalDriver, { underline: true });
       doc.moveDown(0.5);
-      doc.fontSize(10).text(`Nom: ${clientData.additional_driver_name}`);
-      doc.text(`Prénom: ${clientData.additional_driver_firstname}`);
-      doc.text(`Date de naissance: ${clientData.additional_driver_birth_date}`);
-      doc.text(`Lieu de naissance: ${clientData.additional_driver_birth_place}`);
-      doc.text(`Nationalité: ${clientData.additional_driver_nationality}`);
-      doc.text(`N° Permis de conduire: ${clientData.additional_driver_license}`);
-      doc.text(`Date d'émission: ${clientData.additional_driver_license_issue_date}`);
-      doc.text(`Date d'expiration: ${clientData.additional_driver_license_expiry_date}`);
-      doc.text(`Lieu d'émission: ${clientData.additional_driver_license_issue_place}`);
+      doc.fontSize(10).text(`${texts.name}: ${clientData.additional_driver_name}`);
+      doc.text(`${texts.firstname}: ${clientData.additional_driver_firstname}`);
+      doc.text(`${texts.birthDate}: ${clientData.additional_driver_birth_date}`);
+      doc.text(`${texts.birthPlace}: ${clientData.additional_driver_birth_place}`);
+      doc.text(`${texts.nationality}: ${clientData.additional_driver_nationality || ''}`);
+      doc.text(`${texts.licenseNumber}: ${clientData.additional_driver_license_number || ''}`);
+      doc.text(`${texts.issueDate}: ${clientData.additional_driver_license_issue_date || ''}`);
+      doc.text(`${texts.expiryDate}: ${clientData.additional_driver_license_validity_date || ''}`);
+      doc.text(`${texts.issuePlace}: ${clientData.additional_driver_license_issue_place || ''}`);
       doc.moveDown();
     }
     
     // Carte de crédit principale
-    doc.fontSize(14).text('Carte de Crédit Principale', { underline: true });
+    doc.fontSize(14).text(texts.mainCreditCard, { underline: true });
     doc.moveDown(0.5);
-    doc.fontSize(10).text(`Type de carte: ${clientData.main_card_type}`);
-    doc.text(`Numéro de carte: ${clientData.main_card_number}`);
-    doc.text(`Date d'expiration: ${clientData.main_card_expiry_date}`);
-    doc.text(`Nom du titulaire: ${clientData.main_card_holder_name}`);
+    doc.fontSize(10).text(`${texts.cardType}: ${clientData.main_driver_credit_card_type || ''}`);
+    doc.text(`${texts.cardNumber}: ${clientData.main_driver_credit_card || ''}`);
+    doc.text(`${texts.expiryDate}: ${clientData.main_driver_credit_card_expiry || ''}`);
+    doc.text(`${texts.cardHolder}: ${clientData.main_driver_name || ''} ${clientData.main_driver_firstname || ''}`);
     doc.moveDown();
     
     // Carte de crédit supplémentaire
     if (clientData.has_additional_card === 'true' || clientData.has_additional_card === true) {
-      doc.fontSize(14).text('Carte de Crédit Supplémentaire', { underline: true });
+      doc.fontSize(14).text(texts.additionalCreditCard, { underline: true });
       doc.moveDown(0.5);
-      doc.fontSize(10).text(`Type de carte: ${clientData.additional_card_type}`);
-      doc.text(`Numéro de carte: ${clientData.additional_card_number}`);
-      doc.text(`Date d'expiration: ${clientData.additional_card_expiry_date}`);
-      doc.text(`Nom du titulaire: ${clientData.additional_card_holder_name}`);
+      doc.fontSize(10).text(`${texts.cardType}: ${clientData.additional_card_type || ''}`);
+      doc.text(`${texts.cardNumber}: ${clientData.additional_card_number || ''}`);
+      doc.text(`${texts.expiryDate}: ${clientData.additional_card_expiry_date || ''}`);
+      doc.text(`${texts.cardHolder}: ${clientData.additional_card_holder_name || ''}`);
       doc.moveDown();
     }
     
     // Signature
-    doc.fontSize(14).text('Signature', { underline: true });
+    doc.fontSize(14).text(texts.signature, { underline: true });
     doc.moveDown(0.5);
-    doc.fontSize(10).text(`Nom: ${clientData.signature_name}`);
-    doc.text(`Date: ${clientData.signature_date}`);
+    doc.fontSize(10).text(`${texts.name}: ${clientData.signature_name}`);
+    doc.text(`${texts.date}: ${clientData.signature_date}`);
     doc.moveDown();
     
     // Ajouter la signature si elle existe
@@ -409,10 +444,15 @@ app.post('/api/submit', async (req, res) => {
       return res.status(400).json({ error: 'Données de formulaire incomplètes' });
     }
     
-    // Générer un ID unique pour le client
-    const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
-    const uuid = uuidv4();
-    clientData.id = timestamp + '_' + uuid;
+    // Générer un ID unique pour le client plus court
+    const date = new Date();
+    const timestamp = date.getFullYear().toString().slice(-2) + 
+                    ('0' + (date.getMonth() + 1)).slice(-2) + 
+                    ('0' + date.getDate()).slice(-2) + 
+                    ('0' + date.getHours()).slice(-2) + 
+                    ('0' + date.getMinutes()).slice(-2);
+    const shortUuid = uuidv4().split('-')[0]; // Prendre seulement la première partie de l'UUID
+    clientData.id = timestamp + '-' + shortUuid;
     console.log('ID client généré:', clientData.id);
     
     // Générer le PDF
@@ -537,20 +577,39 @@ function insertClientData(clientData, pdfPath) {
         
         const transporter = nodemailer.createTransport(transporterConfig);
         
+        // Déterminer la langue
+        const isFrench = clientData.language === 'fr';
+        
+        // Textes selon la langue
+        const emailTexts = {
+          subject: isFrench 
+            ? `Nouvelle fiche client - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})` 
+            : `New client form - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})`,
+          intro: isFrench 
+            ? `Veuillez trouver ci-joint la fiche client de ${clientData.main_driver_name} ${clientData.main_driver_firstname}.` 
+            : `Please find attached the client form for ${clientData.main_driver_name} ${clientData.main_driver_firstname}.`,
+          clientId: isFrench ? 'ID Client' : 'Client ID',
+          name: isFrench ? 'Nom' : 'Name',
+          firstname: isFrench ? 'Prénom' : 'Firstname',
+          email: 'Email',
+          phone: isFrench ? 'Téléphone' : 'Phone',
+          submissionDate: isFrench ? 'Date de soumission' : 'Submission date'
+        };
+        
         // Envoi de l'email
         const mailOptions = {
           // Pour SendGrid, utiliser l'adresse vérifiée comme expéditeur
           from: process.env.USE_SENDGRID === 'true' ? (process.env.SENDGRID_VERIFIED_SENDER || process.env.EMAIL_USER) : process.env.EMAIL_USER,
           to: process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
-          subject: `Nouvelle fiche client - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})`,
-          text: `Veuillez trouver ci-joint la fiche client de ${clientData.main_driver_name} ${clientData.main_driver_firstname}.
+          subject: emailTexts.subject,
+          text: `${emailTexts.intro}
 
-ID Client: ${clientData.id}
-Nom: ${clientData.main_driver_name}
-Prénom: ${clientData.main_driver_firstname}
-Email: ${clientData.main_driver_email}
-Téléphone: ${clientData.main_driver_phone}
-Date de soumission: ${new Date().toLocaleString()}
+${emailTexts.clientId}: ${clientData.id}
+${emailTexts.name}: ${clientData.main_driver_name}
+${emailTexts.firstname}: ${clientData.main_driver_firstname}
+${emailTexts.email}: ${clientData.main_driver_email}
+${emailTexts.phone}: ${clientData.main_driver_phone}
+${emailTexts.submissionDate}: ${new Date().toLocaleString()}
 `,
           attachments: [
             {
@@ -645,6 +704,137 @@ app.get('/api/export/csv', (req, res) => {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=clients.csv');
     res.status(200).send(csv);
+  });
+});
+
+// API pour télécharger un PDF
+app.get('/api/download-pdf/:id', (req, res) => {
+  const clientId = req.params.id;
+  
+  db.get('SELECT * FROM clients WHERE id = ?', [clientId], async (err, client) => {
+    if (err) {
+      console.error('Erreur lors de la récupération du client:', err);
+      return res.status(500).json({ error: 'Erreur lors de la récupération du client' });
+    }
+    
+    if (!client) {
+      return res.status(404).json({ error: 'Client non trouvé' });
+    }
+    
+    try {
+      // Regénérer le PDF
+      const pdfPath = await generatePDF(client);
+      
+      // Envoyer le PDF
+      res.download(pdfPath, `${client.id}_${client.main_driver_name}_${client.main_driver_firstname}.pdf`);
+    } catch (error) {
+      console.error('Erreur lors de la génération du PDF:', error);
+      res.status(500).json({ error: 'Erreur lors de la génération du PDF' });
+    }
+  });
+});
+
+// API pour renvoyer un email
+app.post('/api/resend-email/:id', (req, res) => {
+  const clientId = req.params.id;
+  
+  db.get('SELECT * FROM clients WHERE id = ?', [clientId], async (err, client) => {
+    if (err) {
+      console.error('Erreur lors de la récupération du client:', err);
+      return res.status(500).json({ error: 'Erreur lors de la récupération du client' });
+    }
+    
+    if (!client) {
+      return res.status(404).json({ error: 'Client non trouvé' });
+    }
+    
+    try {
+      // Regénérer le PDF
+      const pdfPath = await generatePDF(client);
+      
+      // Configurer le transporteur d'email
+      let transporterConfig;
+      
+      // Vérifier si nous utilisons SendGrid
+      if (process.env.USE_SENDGRID === 'true' && process.env.SENDGRID_API_KEY) {
+        transporterConfig = {
+          service: 'SendGrid',
+          auth: {
+            user: 'apikey',
+            pass: process.env.SENDGRID_API_KEY
+          }
+        };
+      } else {
+        transporterConfig = {
+          host: process.env.EMAIL_HOST,
+          port: process.env.EMAIL_PORT,
+          secure: false,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        };
+      }
+      
+      const transporter = nodemailer.createTransport(transporterConfig);
+      
+      // Déterminer la langue
+      const isFrench = client.language === 'fr';
+      
+      // Textes selon la langue
+      const emailTexts = {
+        subject: isFrench 
+          ? `Fiche client - ${client.main_driver_name} ${client.main_driver_firstname} (ID: ${client.id})` 
+          : `Client form - ${client.main_driver_name} ${client.main_driver_firstname} (ID: ${client.id})`,
+        intro: isFrench 
+          ? `Veuillez trouver ci-joint la fiche client de ${client.main_driver_name} ${client.main_driver_firstname}.` 
+          : `Please find attached the client form for ${client.main_driver_name} ${client.main_driver_firstname}.`,
+        clientId: isFrench ? 'ID Client' : 'Client ID',
+        name: isFrench ? 'Nom' : 'Name',
+        firstname: isFrench ? 'Prénom' : 'Firstname',
+        email: 'Email',
+        phone: isFrench ? 'Téléphone' : 'Phone',
+        submissionDate: isFrench ? 'Date de soumission' : 'Submission date'
+      };
+      
+      // Envoi de l'email
+      const mailOptions = {
+        from: process.env.USE_SENDGRID === 'true' ? (process.env.SENDGRID_VERIFIED_SENDER || process.env.EMAIL_USER) : process.env.EMAIL_USER,
+        to: process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
+        subject: emailTexts.subject,
+        text: `${emailTexts.intro}
+
+${emailTexts.clientId}: ${client.id}
+${emailTexts.name}: ${client.main_driver_name}
+${emailTexts.firstname}: ${client.main_driver_firstname}
+${emailTexts.email}: ${client.main_driver_email}
+${emailTexts.phone}: ${client.main_driver_phone}
+${emailTexts.submissionDate}: ${new Date(client.submission_date).toLocaleString()}
+`,
+        attachments: [
+          {
+            filename: `${client.id}_${client.main_driver_name}_${client.main_driver_firstname}.pdf`,
+            path: pdfPath
+          }
+        ]
+      };
+      
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Erreur lors de l\'envoi de l\'email:', error);
+          return res.status(500).json({ error: 'Erreur lors de l\'envoi de l\'email' });
+        }
+        
+        console.log('Email renvoyé avec succès:', info.response);
+        res.status(200).json({ message: 'Email renvoyé avec succès' });
+      });
+    } catch (error) {
+      console.error('Erreur lors du renvoi de l\'email:', error);
+      res.status(500).json({ error: 'Erreur lors du renvoi de l\'email' });
+    }
   });
 });
 
