@@ -539,7 +539,8 @@ function insertClientData(clientData, pdfPath) {
         
         // Envoi de l'email
         const mailOptions = {
-          from: process.env.EMAIL_USER,
+          // Pour SendGrid, utiliser l'adresse vérifiée comme expéditeur
+          from: process.env.USE_SENDGRID === 'true' ? (process.env.SENDGRID_VERIFIED_SENDER || process.env.EMAIL_USER) : process.env.EMAIL_USER,
           to: process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
           subject: `Nouvelle fiche client - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})`,
           text: `Veuillez trouver ci-joint la fiche client de ${clientData.main_driver_name} ${clientData.main_driver_firstname}.
