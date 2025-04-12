@@ -49,6 +49,10 @@ document.addEventListener('DOMContentLoaded', function() {
         signaturePad.clear();
     });
     
+    // Définir les textes pour les placeholders des images
+    const placeholderTextFr = 'Aperçu de l\'image';
+    const placeholderTextEn = 'Image preview';
+    
     // Changement de langue
     languageSelect.addEventListener('change', function() {
         setLanguage(this.value);
@@ -84,8 +88,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Ajouter des placeholders aux conteneurs de prévisualisation
-    const placeholderTextFr = 'Aperçu de l\'image';
-    const placeholderTextEn = 'Image preview';
     
     // Définir les placeholders en fonction de la langue actuelle
     function updatePlaceholders(lang) {
