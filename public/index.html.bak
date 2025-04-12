@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAIATEA RENT CAR - Fiche Client</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/signature_pad.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RAIATEA RENT CAR</h1>
+            <h2>Fiche de renseignements client / Customer Information Form</h2>
+            <div class="language-selector">
+                <button id="fr-btn" class="active">Français</button>
+                <button id="en-btn">English</button>
+            </div>
+        </header>
+
+        <form id="client-form">
+            <input type="hidden" id="language" name="language" value="fr">
+            
+            <section>
+                <h3 data-fr="Conducteur Principal" data-en="Main Driver">Conducteur Principal</h3>
+                <div class="form-group">
+                    <label for="main-driver-name" data-fr="Nom" data-en="Last Name">Nom</label>
+                    <input type="text" id="main-driver-name" name="main_driver_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-firstname" data-fr="Prénom" data-en="First Name">Prénom</label>
+                    <input type="text" id="main-driver-firstname" name="main_driver_firstname" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-birth-date" data-fr="Date de naissance" data-en="Date of Birth">Date de naissance</label>
+                    <input type="date" id="main-driver-birth-date" name="main_driver_birth_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-birth-place" data-fr="Lieu de naissance" data-en="Place of Birth">Lieu de naissance</label>
+                    <input type="text" id="main-driver-birth-place" name="main_driver_birth_place" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-nationality" data-fr="Nationalité" data-en="Nationality">Nationalité</label>
+                    <input type="text" id="main-driver-nationality" name="main_driver_nationality" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-passport" data-fr="N° Passeport" data-en="Passport No.">N° Passeport</label>
+                    <input type="text" id="main-driver-passport" name="main_driver_passport">
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-passport-issue-date" data-fr="Date d'émission" data-en="Issue Date">Date d'émission</label>
+                    <input type="date" id="main-driver-passport-issue-date" name="main_driver_passport_issue_date">
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-passport-expiry-date" data-fr="Date d'expiration" data-en="Expiry Date">Date d'expiration</label>
+                    <input type="date" id="main-driver-passport-expiry-date" name="main_driver_passport_expiry_date">
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-license" data-fr="N° Permis de conduire" data-en="Driver's License No.">N° Permis de conduire</label>
+                    <input type="text" id="main-driver-license" name="main_driver_license" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-license-issue-date" data-fr="Date d'émission" data-en="Issue Date">Date d'émission</label>
+                    <input type="date" id="main-driver-license-issue-date" name="main_driver_license_issue_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-license-expiry-date" data-fr="Date d'expiration" data-en="Expiry Date">Date d'expiration</label>
+                    <input type="date" id="main-driver-license-expiry-date" name="main_driver_license_expiry_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-license-issue-place" data-fr="Lieu d'émission" data-en="Issue Place">Lieu d'émission</label>
+                    <input type="text" id="main-driver-license-issue-place" name="main_driver_license_issue_place" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-address" data-fr="Adresse" data-en="Address">Adresse</label>
+                    <textarea id="main-driver-address" name="main_driver_address" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-city" data-fr="Ville" data-en="City">Ville</label>
+                    <input type="text" id="main-driver-city" name="main_driver_city" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-postal-code" data-fr="Code Postal" data-en="Postal Code">Code Postal</label>
+                    <input type="text" id="main-driver-postal-code" name="main_driver_postal_code" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-country" data-fr="Pays" data-en="Country">Pays</label>
+                    <input type="text" id="main-driver-country" name="main_driver_country" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-phone" data-fr="Téléphone" data-en="Phone">Téléphone</label>
+                    <input type="tel" id="main-driver-phone" name="main_driver_phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-email" data-fr="Email" data-en="Email">Email</label>
+                    <input type="email" id="main-driver-email" name="main_driver_email" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-driver-hotel" data-fr="Hôtel / Pension / Bateau" data-en="Hotel / Guesthouse / Boat">Hôtel / Pension / Bateau</label>
+                    <input type="text" id="main-driver-hotel" name="main_driver_hotel">
+                </div>
+            </section>
+
+            <section id="additional-driver-section">
+                <h3 data-fr="Conducteur Additionnel" data-en="Additional Driver">Conducteur Additionnel</h3>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="has-additional-driver" name="has_additional_driver">
+                    <label for="has-additional-driver" data-fr="Ajouter un conducteur additionnel" data-en="Add an additional driver">Ajouter un conducteur additionnel</label>
+                </div>
+                <div id="additional-driver-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="additional-driver-name" data-fr="Nom" data-en="Last Name">Nom</label>
+                        <input type="text" id="additional-driver-name" name="additional_driver_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-driver-firstname" data-fr="Prénom" data-en="First Name">Prénom</label>
+                        <input type="text" id="additional-driver-firstname" name="additional_driver_firstname">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-driver-birth-date" data-fr="Date de naissance" data-en="Date of Birth">Date de naissance</label>
+                        <input type="date" id="additional-driver-birth-date" name="additional_driver_birth_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-driver-birth-place" data-fr="Lieu de naissance" data-en="Place of Birth">Lieu de naissance</label>
+                        <input type="text" id="additional-driver-birth-place" name="additional_driver_birth_place">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-driver-nationality" data-fr="Nationalité" data-en="Nationality">Nationalité</label>
+                        <input type="text" id="additional-driver-nationality" name="additional_driver_nationality">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-driver-license" data-fr="N° Permis de conduire" data-en="Driver's License No.">N° Permis de conduire</label>
+                        <input type="text" id="additional-driver-license" name="additional_driver_license">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-driver-license-issue-date" data-fr="Date d'émission" data-en="Issue Date">Date d'émission</label>
+                        <input type="date" id="additional-driver-license-issue-date" name="additional_driver_license_issue_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-driver-license-expiry-date" data-fr="Date d'expiration" data-en="Expiry Date">Date d'expiration</label>
+                        <input type="date" id="additional-driver-license-expiry-date" name="additional_driver_license_expiry_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-driver-license-issue-place" data-fr="Lieu d'émission" data-en="Issue Place">Lieu d'émission</label>
+                        <input type="text" id="additional-driver-license-issue-place" name="additional_driver_license_issue_place">
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h3 data-fr="Carte de Crédit Principale" data-en="Main Credit Card">Carte de Crédit Principale</h3>
+                <div class="form-group">
+                    <label for="main-card-type" data-fr="Type de carte" data-en="Card Type">Type de carte</label>
+                    <select id="main-card-type" name="main_card_type" required>
+                        <option value="" data-fr="Sélectionner" data-en="Select">Sélectionner</option>
+                        <option value="visa" data-fr="Visa" data-en="Visa">Visa</option>
+                        <option value="mastercard" data-fr="MasterCard" data-en="MasterCard">MasterCard</option>
+                        <option value="amex" data-fr="American Express" data-en="American Express">American Express</option>
+                        <option value="other" data-fr="Autre" data-en="Other">Autre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="main-card-number" data-fr="Numéro de carte" data-en="Card Number">Numéro de carte</label>
+                    <input type="text" id="main-card-number" name="main_card_number" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-card-expiry-date" data-fr="Date d'expiration" data-en="Expiry Date">Date d'expiration</label>
+                    <input type="month" id="main-card-expiry-date" name="main_card_expiry_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="main-card-holder-name" data-fr="Nom du titulaire" data-en="Cardholder Name">Nom du titulaire</label>
+                    <input type="text" id="main-card-holder-name" name="main_card_holder_name" required>
+                </div>
+            </section>
+
+            <section id="additional-card-section">
+                <h3 data-fr="Carte de Crédit Supplémentaire" data-en="Additional Credit Card">Carte de Crédit Supplémentaire</h3>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="has-additional-card" name="has_additional_card">
+                    <label for="has-additional-card" data-fr="Ajouter une carte supplémentaire" data-en="Add an additional card">Ajouter une carte supplémentaire</label>
+                </div>
+                <div id="additional-card-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="additional-card-type" data-fr="Type de carte" data-en="Card Type">Type de carte</label>
+                        <select id="additional-card-type" name="additional_card_type">
+                            <option value="" data-fr="Sélectionner" data-en="Select">Sélectionner</option>
+                            <option value="visa" data-fr="Visa" data-en="Visa">Visa</option>
+                            <option value="mastercard" data-fr="MasterCard" data-en="MasterCard">MasterCard</option>
+                            <option value="amex" data-fr="American Express" data-en="American Express">American Express</option>
+                            <option value="other" data-fr="Autre" data-en="Other">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-card-number" data-fr="Numéro de carte" data-en="Card Number">Numéro de carte</label>
+                        <input type="text" id="additional-card-number" name="additional_card_number">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-card-expiry-date" data-fr="Date d'expiration" data-en="Expiry Date">Date d'expiration</label>
+                        <input type="month" id="additional-card-expiry-date" name="additional_card_expiry_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="additional-card-holder-name" data-fr="Nom du titulaire" data-en="Cardholder Name">Nom du titulaire</label>
+                        <input type="text" id="additional-card-holder-name" name="additional_card_holder_name">
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h3 data-fr="Conditions Générales" data-en="Terms and Conditions">Conditions Générales</h3>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="accept-terms" name="accept_terms" required>
+                    <label for="accept-terms" data-fr="J'accepte les conditions générales de location" data-en="I accept the general rental conditions">J'accepte les conditions générales de location</label>
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="accept-data-processing" name="accept_data_processing" required>
+                    <label for="accept-data-processing" data-fr="J'accepte le traitement de mes données personnelles" data-en="I accept the processing of my personal data">J'accepte le traitement de mes données personnelles</label>
+                </div>
+            </section>
+
+            <section>
+                <h3 data-fr="Signature" data-en="Signature">Signature</h3>
+                <div class="form-group">
+                    <label for="signature-name" data-fr="Nom" data-en="Name">Nom</label>
+                    <input type="text" id="signature-name" name="signature_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="signature-date" data-fr="Date" data-en="Date">Date</label>
+                    <input type="date" id="signature-date" name="signature_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="signature-pad" data-fr="Signature" data-en="Signature">Signature</label>
+                    <div class="signature-container">
+                        <canvas id="signature-pad" width="400" height="200"></canvas>
+                        <input type="hidden" id="signature-data" name="signature_data">
+                    </div>
+                    <button type="button" id="clear-signature" data-fr="Effacer" data-en="Clear">Effacer</button>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" data-fr="Envoyer" data-en="Submit">Envoyer</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

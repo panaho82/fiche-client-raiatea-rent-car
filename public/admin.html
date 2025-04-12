@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAIATEA RENT CAR - Administration</title>
+    <link rel="stylesheet" href="css/admin-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>RAIATEA RENT CAR</h1>
+                <p>Interface d'Administration</p>
+            </div>
+        </header>
+
+        <main>
+            <div class="controls">
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="Rechercher un client...">
+                    <button id="search-btn"><i class="fas fa-search"></i></button>
+                </div>
+                <div class="filter-box">
+                    <select id="language-filter">
+                        <option value="all">Toutes les langues</option>
+                        <option value="fr">Français</option>
+                        <option value="en">Anglais</option>
+                    </select>
+                    <button id="export-btn">Exporter les données (CSV)</button>
+                </div>
+            </div>
+
+            <div class="clients-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Nom</th>
+                            <th>Prénom</th>
+                            <th>Email</th>
+                            <th>Téléphone</th>
+                            <th>Langue</th>
+                            <th>ID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clients-list">
+                        <!-- Les clients seront ajoutés ici dynamiquement -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="pagination">
+                <!-- Pagination sera ajoutée ici dynamiquement -->
+            </div>
+        </main>
+
+        <div id="client-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Détails du client</h2>
+                <div id="client-details">
+                    <!-- Détails du client seront ajoutés ici dynamiquement -->
+                </div>
+                <div class="modal-actions">
+                    <button id="download-pdf">Télécharger le PDF</button>
+                    <button id="resend-email">Renvoyer par email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

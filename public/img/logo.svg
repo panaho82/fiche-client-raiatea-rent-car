@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(20, 20)">
+    <!-- Premier R (jaune) -->
+    <path d="M80 50 Q80 30 100 30 H140 Q160 30 160 50 V70 Q160 90 140 90 H100 L160 170 H130 L70 90 V170 H50 V30 H80 V50 Z" fill="#FFD700"/>
+    
+    <!-- Deuxième R (gris) -->
+    <path d="M180 50 Q180 30 200 30 H240 Q260 30 260 50 V70 Q260 90 240 90 H200 L260 170 H230 L170 90 V170 H150 V30 H180 V50 Z" fill="#808080"/>
+  </g>
+</svg>

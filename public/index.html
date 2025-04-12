@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAIATEA RENT CAR - Fiche Client</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="language-selector">
+        <select id="language-select">
+            <option value="fr" selected>Français</option>
+            <option value="en">English</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>RAIATEA RENT CAR</h1>
+                <p>RCS: 07238B - NR TAHITI: 834119</p>
+                <p class="lang-fr">Aéroport de Raiatea</p>
+                <p class="lang-en">Raiatea Airport</p>
+                <p>GSM: +689 87-313262</p>
+            </div>
+            <h2 class="form-title lang-fr">FICHE DE RENSEIGNEMENT CLIENT</h2>
+            <h2 class="form-title lang-en">CLIENT INFORMATION FORM</h2>
+        </header>
+
+        <form id="client-form">
+            <input type="hidden" id="client-id" name="id">
+            <input type="hidden" id="language" name="language" value="fr">
+
+            <!-- Section Conducteur Principal -->
+            <section class="form-section">
+                <h3 class="lang-fr">Conducteur Principal</h3>
+                <h3 class="lang-en">Main Driver</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-name" class="lang-fr">Nom</label>
+                        <label for="main-driver-name" class="lang-en">Name</label>
+                        <input type="text" id="main-driver-name" name="main_driver_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-firstname" class="lang-fr">Prénoms</label>
+                        <label for="main-driver-firstname" class="lang-en">Firstname(s)</label>
+                        <input type="text" id="main-driver-firstname" name="main_driver_firstname" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="main-driver-address" class="lang-fr">Adresse (rue)</label>
+                        <label for="main-driver-address" class="lang-en">Address (street)</label>
+                        <input type="text" id="main-driver-address" name="main_driver_address" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-postal-code" class="lang-fr">Code postal</label>
+                        <label for="main-driver-postal-code" class="lang-en">Postal code</label>
+                        <input type="text" id="main-driver-postal-code" name="main_driver_postal_code" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-city" class="lang-fr">Ville</label>
+                        <label for="main-driver-city" class="lang-en">City</label>
+                        <input type="text" id="main-driver-city" name="main_driver_city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-country" class="lang-fr">Pays</label>
+                        <label for="main-driver-country" class="lang-en">Country</label>
+                        <input type="text" id="main-driver-country" name="main_driver_country" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-birth-date" class="lang-fr">Date de naissance</label>
+                        <label for="main-driver-birth-date" class="lang-en">Birth date</label>
+                        <input type="date" id="main-driver-birth-date" name="main_driver_birth_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-birth-place" class="lang-fr">Lieu de naissance</label>
+                        <label for="main-driver-birth-place" class="lang-en">Birth place</label>
+                        <input type="text" id="main-driver-birth-place" name="main_driver_birth_place" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-phone" class="lang-fr">Téléphone</label>
+                        <label for="main-driver-phone" class="lang-en">Phone</label>
+                        <input type="tel" id="main-driver-phone" name="main_driver_phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-email" class="lang-fr">Email</label>
+                        <label for="main-driver-email" class="lang-en">Email</label>
+                        <input type="email" id="main-driver-email" name="main_driver_email" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-license-number" class="lang-fr">N° du permis de conduire</label>
+                        <label for="main-driver-license-number" class="lang-en">Driver's license number</label>
+                        <input type="text" id="main-driver-license-number" name="main_driver_license_number" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-license-issue-date" class="lang-fr">Date d'émission du permis</label>
+                        <label for="main-driver-license-issue-date" class="lang-en">Issue date</label>
+                        <input type="date" id="main-driver-license-issue-date" name="main_driver_license_issue_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-license-validity-date" class="lang-fr">Date de validité du permis</label>
+                        <label for="main-driver-license-validity-date" class="lang-en">Validity date</label>
+                        <input type="date" id="main-driver-license-validity-date" name="main_driver_license_validity_date" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="main-driver-license-issue-place" class="lang-fr">Lieu d'émission du permis</label>
+                        <label for="main-driver-license-issue-place" class="lang-en">Issue place</label>
+                        <input type="text" id="main-driver-license-issue-place" name="main_driver_license_issue_place" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Carte de Crédit -->
+            <section class="form-section">
+                <h3 class="lang-fr">Carte de Crédit</h3>
+                <h3 class="lang-en">Credit Card</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-credit-card" class="lang-fr">Numéro de carte de crédit</label>
+                        <label for="main-driver-credit-card" class="lang-en">Credit card number</label>
+                        <input type="text" id="main-driver-credit-card" name="main_driver_credit_card" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-credit-card-expiry" class="lang-fr">Date d'expiration</label>
+                        <label for="main-driver-credit-card-expiry" class="lang-en">Expiration date</label>
+                        <input type="month" id="main-driver-credit-card-expiry" name="main_driver_credit_card_expiry" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Conducteur Additionnel -->
+            <section class="form-section">
+                <div class="form-row checkbox-row">
+                    <div class="form-group">
+                        <input type="checkbox" id="has-additional-driver" name="has_additional_driver">
+                        <label for="has-additional-driver" class="lang-fr">Conducteur Additionnel</label>
+                        <label for="has-additional-driver" class="lang-en">Additional Driver</label>
+                    </div>
+                </div>
+
+                <div id="additional-driver-section" class="hidden">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="additional-driver-name" class="lang-fr">Nom</label>
+                            <label for="additional-driver-name" class="lang-en">Name</label>
+                            <input type="text" id="additional-driver-name" name="additional_driver_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="additional-driver-firstname" class="lang-fr">Prénoms</label>
+                            <label for="additional-driver-firstname" class="lang-en">Firstname(s)</label>
+                            <input type="text" id="additional-driver-firstname" name="additional_driver_firstname">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="additional-driver-address" class="lang-fr">Adresse (rue)</label>
+                            <label for="additional-driver-address" class="lang-en">Address (street)</label>
+                            <input type="text" id="additional-driver-address" name="additional_driver_address">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="additional-driver-postal-code" class="lang-fr">Code postal</label>
+                            <label for="additional-driver-postal-code" class="lang-en">Postal code</label>
+                            <input type="text" id="additional-driver-postal-code" name="additional_driver_postal_code">
+                        </div>
+                        <div class="form-group">
+                            <label for="additional-driver-city" class="lang-fr">Ville</label>
+                            <label for="additional-driver-city" class="lang-en">City</label>
+                            <input type="text" id="additional-driver-city" name="additional_driver_city">
+                        </div>
+                        <div class="form-group">
+                            <label for="additional-driver-country" class="lang-fr">Pays</label>
+                            <label for="additional-driver-country" class="lang-en">Country</label>
+                            <input type="text" id="additional-driver-country" name="additional_driver_country">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="additional-driver-birth-date" class="lang-fr">Date de naissance</label>
+                            <label for="additional-driver-birth-date" class="lang-en">Birth date</label>
+                            <input type="date" id="additional-driver-birth-date" name="additional_driver_birth_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="additional-driver-birth-place" class="lang-fr">Lieu de naissance</label>
+                            <label for="additional-driver-birth-place" class="lang-en">Birth place</label>
+                            <input type="text" id="additional-driver-birth-place" name="additional_driver_birth_place">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="additional-driver-phone" class="lang-fr">Téléphone</label>
+                            <label for="additional-driver-phone" class="lang-en">Phone</label>
+                            <input type="tel" id="additional-driver-phone" name="additional_driver_phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="additional-driver-email" class="lang-fr">Email</label>
+                            <label for="additional-driver-email" class="lang-en">Email</label>
+                            <input type="email" id="additional-driver-email" name="additional_driver_email">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="additional-driver-license-number" class="lang-fr">N° du permis de conduire</label>
+                            <label for="additional-driver-license-number" class="lang-en">Driver's license number</label>
+                            <input type="text" id="additional-driver-license-number" name="additional_driver_license_number">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="additional-driver-license-issue-date" class="lang-fr">Date d'émission du permis</label>
+                            <label for="additional-driver-license-issue-date" class="lang-en">Issue date</label>
+                            <input type="date" id="additional-driver-license-issue-date" name="additional_driver_license_issue_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="additional-driver-license-validity-date" class="lang-fr">Date de validité du permis</label>
+                            <label for="additional-driver-license-validity-date" class="lang-en">Validity date</label>
+                            <input type="date" id="additional-driver-license-validity-date" name="additional_driver_license_validity_date">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="additional-driver-license-issue-place" class="lang-fr">Lieu d'émission du permis</label>
+                            <label for="additional-driver-license-issue-place" class="lang-en">Issue place</label>
+                            <input type="text" id="additional-driver-license-issue-place" name="additional_driver_license_issue_place">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Carte de Crédit Supplémentaire -->
+            <section class="form-section">
+                <div class="form-row checkbox-row">
+                    <div class="form-group">
+                        <input type="checkbox" id="has-additional-credit-card" name="has_additional_credit_card">
+                        <label for="has-additional-credit-card" class="lang-fr">Carte de Crédit Supplémentaire</label>
+                        <label for="has-additional-credit-card" class="lang-en">Additional Credit Card</label>
+                    </div>
+                </div>
+
+                <div id="additional-credit-card-section" class="hidden">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="additional-credit-card" class="lang-fr">Numéro de carte de crédit</label>
+                            <label for="additional-credit-card" class="lang-en">Credit card number</label>
+                            <input type="text" id="additional-credit-card" name="additional_credit_card">
+                        </div>
+                        <div class="form-group">
+                            <label for="additional-credit-card-expiry" class="lang-fr">Date d'expiration</label>
+                            <label for="additional-credit-card-expiry" class="lang-en">Expiration date</label>
+                            <input type="month" id="additional-credit-card-expiry" name="additional_credit_card_expiry">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Informations sur les amendes -->
+            <section class="form-section">
+                <h3 class="lang-fr">Informations sur les amendes</h3>
+                <h3 class="lang-en">Fines information</h3>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <p class="info-text lang-fr">
+                            Nous vous informons que la société SARL RAIATEA RENT A CAR ne peut être tenue responsable des amendes reçues dans le cadre de la location. Vous autorisez la société RAIATEA RENT CAR à débiter votre carte de crédit du montant de l'amende, majorée de frais de dossier forfaitaire de 3000 FCP au cas où ce montant serait réclamé à RAIATEA RENT CAR par les autorités compétentes.
+                        </p>
+                        <p class="info-text lang-en">
+                            Please note that SARL RAIATEA RENT A CAR cannot be held responsible for fines received during the rental period. You authorize RAIATEA RENT CAR to debit your credit card for the fine amount, plus a flat administrative fee of 3000 XPF, if this amount is claimed from RAIATEA RENT CAR by the competent authorities.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-row checkbox-row">
+                    <div class="form-group">
+                        <input type="checkbox" id="accept-fines" name="accept_fines" required>
+                        <label for="accept-fines" class="lang-fr">J'accepte ces conditions</label>
+                        <label for="accept-fines" class="lang-en">I accept these conditions</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Traitement des données personnelles -->
+            <section class="form-section">
+                <h3 class="lang-fr">Traitement des données personnelles</h3>
+                <h3 class="lang-en">Personal data processing</h3>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <p class="info-text lang-fr">
+                            Conformément à la loi Informatique et Libertés du 6 janvier 1978 modifiée, vous disposez d'un droit d'accès, de rectification, de suppression et d'opposition aux données personnelles vous concernant. Vous pouvez exercer ce droit en nous adressant un email à raiatearentcar@mail.pf. Nous nous engageons à protéger vos données et à ne pas les communiquer à des tiers sans votre consentement, sauf obligation légale.
+                        </p>
+                        <p class="info-text lang-en">
+                            In accordance with the French Data Protection Act of January 6, 1978, as amended, you have the right to access, rectify, delete and object to the personal data concerning you. You can exercise this right by sending us an email at raiatearentcar@mail.pf. We are committed to protecting your data and not communicating it to third parties without your consent, except for legal obligations.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-row checkbox-row">
+                    <div class="form-group">
+                        <input type="checkbox" id="accept-data-processing" name="accept_data_processing" required>
+                        <label for="accept-data-processing" class="lang-fr">J'accepte le traitement de mes données personnelles</label>
+                        <label for="accept-data-processing" class="lang-en">I consent to the processing of my personal data</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Signature -->
+            <section class="form-section">
+                <h3 class="lang-fr">Signature</h3>
+                <h3 class="lang-en">Signature</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="signature-date" class="lang-fr">Date</label>
+                        <label for="signature-date" class="lang-en">Date</label>
+                        <input type="date" id="signature-date" name="signature_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signature-name" class="lang-fr">Nom</label>
+                        <label for="signature-name" class="lang-en">Name</label>
+                        <input type="text" id="signature-name" name="signature_name" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label class="lang-fr">Signature (dessinez avec votre doigt ou votre souris)</label>
+                        <label class="lang-en">Signature (draw with your finger or mouse)</label>
+                        <div class="signature-container">
+                            <canvas id="signature-pad" width="600" height="200"></canvas>
+                            <input type="hidden" id="signature-data" name="signature_data">
+                        </div>
+                        <div class="signature-actions">
+                            <button type="button" id="clear-signature" class="secondary-btn lang-fr">Effacer</button>
+                            <button type="button" id="clear-signature" class="secondary-btn lang-en">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn lang-fr">Envoyer</button>
+                <button type="submit" class="submit-btn lang-en">Submit</button>
+            </div>
+        </form>
+
+        <div id="success-message" class="hidden" style="display: none;">
+            <div class="success-content">
+                <i class="fas fa-check-circle"></i>
+                <h3 class="lang-fr">Formulaire envoyé avec succès !</h3>
+                <h3 class="lang-en">Form submitted successfully!</h3>
+                <p class="lang-fr">Merci d'avoir rempli la fiche client. Un PDF a été généré et envoyé à RAIATEA RENT CAR.</p>
+                <p class="lang-en">Thank you for filling out the client form. A PDF has been generated and sent to RAIATEA RENT CAR.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/signature_pad.min.js?v=1.0.1"></script>
+    <script src="js/script.js?v=1.0.1"></script>
+</body>
+</html>
