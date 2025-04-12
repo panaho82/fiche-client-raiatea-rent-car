@@ -358,7 +358,35 @@ function generatePDF(clientData) {
     doc.text(`${texts.issueDate}: ${clientData.main_driver_license_issue_date || ''}`);
     doc.text(`${texts.expiryDate}: ${clientData.main_driver_license_validity_date || ''}`);
     doc.text(`${texts.issuePlace}: ${clientData.main_driver_license_issue_place || ''}`);
+    
+    // Ajouter les images du permis de conduire du conducteur principal si disponibles
+    if (clientData.main_driver_license_front_data) {
+      doc.moveDown();
+      doc.fontSize(10).text(isFrench ? 'Photo du permis (recto):' : 'Driver\'s license photo (front):', { continued: false });
+      try {
+        doc.image(clientData.main_driver_license_front_data, {
+          fit: [250, 150],
+          align: 'center'
+        });
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout de l\'image recto du permis au PDF:', error);
+      }
+    }
+    
+    if (clientData.main_driver_license_back_data) {
+      doc.moveDown();
+      doc.fontSize(10).text(isFrench ? 'Photo du permis (verso):' : 'Driver\'s license photo (back):', { continued: false });
+      try {
+        doc.image(clientData.main_driver_license_back_data, {
+          fit: [250, 150],
+          align: 'center'
+        });
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout de l\'image verso du permis au PDF:', error);
+      }
+    }
 
+    doc.moveDown();
     doc.text(`${texts.address}: ${clientData.main_driver_address}`);
     doc.text(`${texts.city}: ${clientData.main_driver_city}`);
     doc.text(`${texts.postalCode}: ${clientData.main_driver_postal_code}`);
@@ -385,6 +413,34 @@ function generatePDF(clientData) {
       doc.text(`${texts.issueDate}: ${clientData.additional_driver_license_issue_date || ''}`);
       doc.text(`${texts.expiryDate}: ${clientData.additional_driver_license_validity_date || ''}`);
       doc.text(`${texts.issuePlace}: ${clientData.additional_driver_license_issue_place || ''}`);
+      
+      // Ajouter les images du permis de conduire du conducteur additionnel si disponibles
+      if (clientData.additional_driver_license_front_data) {
+        doc.moveDown();
+        doc.fontSize(10).text(isFrench ? 'Photo du permis (recto):' : 'Driver\'s license photo (front):', { continued: false });
+        try {
+          doc.image(clientData.additional_driver_license_front_data, {
+            fit: [250, 150],
+            align: 'center'
+          });
+        } catch (error) {
+          console.error('Erreur lors de l\'ajout de l\'image recto du permis additionnel au PDF:', error);
+        }
+      }
+      
+      if (clientData.additional_driver_license_back_data) {
+        doc.moveDown();
+        doc.fontSize(10).text(isFrench ? 'Photo du permis (verso):' : 'Driver\'s license photo (back):', { continued: false });
+        try {
+          doc.image(clientData.additional_driver_license_back_data, {
+            fit: [250, 150],
+            align: 'center'
+          });
+        } catch (error) {
+          console.error('Erreur lors de l\'ajout de l\'image verso du permis additionnel au PDF:', error);
+        }
+      }
+      
       doc.moveDown();
     }
     

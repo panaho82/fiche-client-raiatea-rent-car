@@ -16,6 +16,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const rentalConditionsContent = document.getElementById('rental-conditions-content');
     const rentalConditionsText = document.getElementById('rental-conditions-text');
     
+    // Éléments pour le téléchargement des photos de permis
+    const mainDriverLicenseFront = document.getElementById('main-driver-license-front');
+    const mainDriverLicenseBack = document.getElementById('main-driver-license-back');
+    const mainDriverLicenseFrontPreview = document.getElementById('main-driver-license-front-preview');
+    const mainDriverLicenseBackPreview = document.getElementById('main-driver-license-back-preview');
+    const mainDriverLicenseFrontPreviewContainer = document.getElementById('main-driver-license-front-preview-container');
+    const mainDriverLicenseBackPreviewContainer = document.getElementById('main-driver-license-back-preview-container');
+    
+    const additionalDriverLicenseFront = document.getElementById('additional-driver-license-front');
+    const additionalDriverLicenseBack = document.getElementById('additional-driver-license-back');
+    const additionalDriverLicenseFrontPreview = document.getElementById('additional-driver-license-front-preview');
+    const additionalDriverLicenseBackPreview = document.getElementById('additional-driver-license-back-preview');
+    const additionalDriverLicenseFrontPreviewContainer = document.getElementById('additional-driver-license-front-preview-container');
+    const additionalDriverLicenseBackPreviewContainer = document.getElementById('additional-driver-license-back-preview-container');
+    
     // S'assurer que le message de succès est caché et le formulaire visible au chargement
     successMessage.classList.add('hidden');
     successMessage.style.display = 'none';
@@ -51,6 +66,67 @@ document.addEventListener('DOMContentLoaded', function() {
             rentalConditionsContent.classList.add('show');
         }
     });
+    
+    // Ajouter des placeholders aux conteneurs de prévisualisation
+    const placeholderTextFr = 'Aperçu de l\'image';
+    const placeholderTextEn = 'Image preview';
+    
+    // Définir les placeholders en fonction de la langue actuelle
+    function updatePlaceholders(lang) {
+        const placeholderText = lang === 'fr' ? placeholderTextFr : placeholderTextEn;
+        mainDriverLicenseFrontPreviewContainer.setAttribute('data-placeholder', placeholderText);
+        mainDriverLicenseBackPreviewContainer.setAttribute('data-placeholder', placeholderText);
+        additionalDriverLicenseFrontPreviewContainer.setAttribute('data-placeholder', placeholderText);
+        additionalDriverLicenseBackPreviewContainer.setAttribute('data-placeholder', placeholderText);
+    }
+    
+    // Initialiser les placeholders
+    updatePlaceholders(languageSelect.value);
+    
+    // Gérer le téléchargement des photos de permis du conducteur principal
+    mainDriverLicenseFront.addEventListener('change', function(e) {
+        handleImageUpload(this, mainDriverLicenseFrontPreview, mainDriverLicenseFrontPreviewContainer, 'main_driver_license_front_data');
+    });
+    
+    mainDriverLicenseBack.addEventListener('change', function(e) {
+        handleImageUpload(this, mainDriverLicenseBackPreview, mainDriverLicenseBackPreviewContainer, 'main_driver_license_back_data');
+    });
+    
+    // Gérer le téléchargement des photos de permis du conducteur additionnel
+    additionalDriverLicenseFront.addEventListener('change', function(e) {
+        handleImageUpload(this, additionalDriverLicenseFrontPreview, additionalDriverLicenseFrontPreviewContainer, 'additional_driver_license_front_data');
+    });
+    
+    additionalDriverLicenseBack.addEventListener('change', function(e) {
+        handleImageUpload(this, additionalDriverLicenseBackPreview, additionalDriverLicenseBackPreviewContainer, 'additional_driver_license_back_data');
+    });
+    
+    // Fonction pour gérer le téléchargement et l'aperçu des images
+    function handleImageUpload(input, previewImg, previewContainer, hiddenFieldName) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                // Afficher l'aperçu de l'image
+                previewImg.src = e.target.result;
+                previewImg.classList.remove('hidden');
+                previewContainer.classList.add('has-image');
+                
+                // Créer ou mettre à jour le champ caché pour stocker les données de l'image
+                let hiddenField = document.getElementById(hiddenFieldName);
+                if (!hiddenField) {
+                    hiddenField = document.createElement('input');
+                    hiddenField.type = 'hidden';
+                    hiddenField.id = hiddenFieldName;
+                    hiddenField.name = hiddenFieldName;
+                    form.appendChild(hiddenField);
+                }
+                hiddenField.value = e.target.result;
+            };
+            
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
     
     // Afficher/masquer la section conducteur additionnel
     hasAdditionalDriverCheckbox.addEventListener('change', function() {
@@ -186,6 +262,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 toggleSpan.style.display = 'block';
             }
         }
+        
+        // Mettre à jour les placeholders des conteneurs de prévisualisation
+        updatePlaceholders(lang);
     }
     
     function toggleSection(isVisible, section) {

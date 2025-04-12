@@ -131,6 +131,25 @@
                         <input type="text" id="main-driver-license-issue-place" name="main_driver_license_issue_place" required>
                     </div>
                 </div>
+
+                <div class="form-row license-upload-section">
+                    <div class="form-group">
+                        <label for="main-driver-license-front" class="lang-fr">Photo du permis (recto)</label>
+                        <label for="main-driver-license-front" class="lang-en">Driver's license photo (front)</label>
+                        <input type="file" id="main-driver-license-front" name="main_driver_license_front" accept="image/*" capture="environment" class="file-input" required>
+                        <div class="preview-container" id="main-driver-license-front-preview-container">
+                            <img id="main-driver-license-front-preview" class="license-preview hidden" src="#" alt="">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-license-back" class="lang-fr">Photo du permis (verso)</label>
+                        <label for="main-driver-license-back" class="lang-en">Driver's license photo (back)</label>
+                        <input type="file" id="main-driver-license-back" name="main_driver_license_back" accept="image/*" capture="environment" class="file-input" required>
+                        <div class="preview-container" id="main-driver-license-back-preview-container">
+                            <img id="main-driver-license-back-preview" class="license-preview hidden" src="#" alt="">
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Section Carte de Crédit -->
@@ -254,6 +273,25 @@
                             <label for="additional-driver-license-issue-place" class="lang-fr">Lieu d'émission du permis</label>
                             <label for="additional-driver-license-issue-place" class="lang-en">Issue place</label>
                             <input type="text" id="additional-driver-license-issue-place" name="additional_driver_license_issue_place">
+                        </div>
+                    </div>
+
+                    <div class="form-row license-upload-section">
+                        <div class="form-group">
+                            <label for="additional-driver-license-front" class="lang-fr">Photo du permis (recto)</label>
+                            <label for="additional-driver-license-front" class="lang-en">Driver's license photo (front)</label>
+                            <input type="file" id="additional-driver-license-front" name="additional_driver_license_front" accept="image/*" capture="environment" class="file-input">
+                            <div class="preview-container" id="additional-driver-license-front-preview-container">
+                                <img id="additional-driver-license-front-preview" class="license-preview hidden" src="#" alt="">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="additional-driver-license-back" class="lang-fr">Photo du permis (verso)</label>
+                            <label for="additional-driver-license-back" class="lang-en">Driver's license photo (back)</label>
+                            <input type="file" id="additional-driver-license-back" name="additional_driver_license_back" accept="image/*" capture="environment" class="file-input">
+                            <div class="preview-container" id="additional-driver-license-back-preview-container">
+                                <img id="additional-driver-license-back-preview" class="license-preview hidden" src="#" alt="">
+                            </div>
                         </div>
                     </div>
                 </div>

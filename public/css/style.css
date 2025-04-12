@@ -178,40 +178,84 @@ input[type="checkbox"] {
 
 /* Pad de signature */
 .signature-container {
-    position: relative;
-    margin-bottom: 15px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: white;
+    margin-top: 10px;
     overflow: hidden;
 }
 
 #signature-pad {
     width: 100%;
     height: 200px;
-    cursor: crosshair;
+    background-color: white;
 }
 
 .signature-actions {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
 }
 
-.secondary-btn {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    font-size: 14px;
+#clear-signature {
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s;
-    margin-left: 10px;
+    font-size: 14px;
 }
 
-.secondary-btn:hover {
-    opacity: 0.9;
+#clear-signature:hover {
+    background-color: #e9ecef;
+}
+
+/* Upload de permis de conduire */
+.license-upload-section {
+    margin-top: 15px;
+}
+
+.file-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+}
+
+.preview-container {
+    width: 100%;
+    height: 150px;
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: #f8f9fa;
+    position: relative;
+}
+
+.license-preview {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.license-preview.hidden {
+    display: none;
+}
+
+.preview-container::before {
+    content: attr(data-placeholder);
+    color: var(--accent-color);
+    font-size: 14px;
+    position: absolute;
+}
+
+.preview-container.has-image::before {
+    display: none;
 }
 
 /* Boutons */
