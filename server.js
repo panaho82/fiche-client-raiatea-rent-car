@@ -322,31 +322,36 @@ function generatePDF(clientData) {
     // Fonction pour ajouter deux champs côte à côte (pour optimiser l'espace)
     const addFieldRow = (label1, value1, label2, value2) => {
       const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-      const halfWidth = pageWidth / 2 - 10;
+      const colWidth = pageWidth / 2 - 5; // Réduire l'écart entre les colonnes
+      
+      // Définir des largeurs fixes pour les étiquettes et les valeurs
+      const labelWidth1 = 100;
+      const valueWidth1 = colWidth - labelWidth1;
       
       // Premier champ
+      const yPos = doc.y;
       doc.font('Helvetica').text(label1, {
         continued: true,
-        width: 120
+        width: labelWidth1
       });
       
       if (value1) {
         doc.font('Helvetica-Bold');
       }
       
-      const xPos = doc.x;
-      const yPos = doc.y;
-      
       doc.text(value1 || '', {
         continued: false,
-        width: halfWidth - 120
+        width: valueWidth1
       });
       
       // Deuxième champ sur la même ligne
+      const labelWidth2 = 100;
+      const valueWidth2 = colWidth - labelWidth2;
+      
       doc.font('Helvetica');
-      doc.text(label2, doc.page.margins.left + halfWidth + 10, yPos, {
+      doc.text(label2, doc.page.margins.left + colWidth + 10, yPos, {
         continued: true,
-        width: 120
+        width: labelWidth2
       });
       
       if (value2) {
@@ -355,7 +360,7 @@ function generatePDF(clientData) {
       
       doc.text(value2 || '', {
         continued: false,
-        width: halfWidth - 120
+        width: valueWidth2
       });
       
       doc.font('Helvetica');
@@ -456,70 +461,55 @@ function generatePDF(clientData) {
     addFieldRow(`${texts.nationality}: `, clientData.main_driver_nationality || '', `${texts.phone}: `, clientData.main_driver_phone);
     addField(`${texts.email}: `, clientData.main_driver_email);
     
-    // Permis de conduire et adresse côte à côte pour économiser de l'espace
-    const colWidth = pageWidth / 2 - 10;
-    
-    // Créer deux colonnes
+    // Utiliser addFieldRow pour les sections permis et adresse pour un meilleur alignement
     doc.moveDown(0.3);
     
-    // Colonne gauche: Permis de conduire
+    // Ajouter les titres des deux sections côte à côte
+    // Utiliser la variable pageWidth déjà déclarée
+    const colWidth = pageWidth / 2 - 5;
+    
+    // Titre de la section permis de conduire
+    const licenseY = doc.y;
     doc.font('Helvetica-Bold').fontSize(10).text(texts.driverLicense, { underline: true });
+    
+    // Titre de la section adresse
+    doc.font('Helvetica-Bold').fontSize(10).text(texts.addressInfo, doc.page.margins.left + colWidth + 10, licenseY, { underline: true });
     doc.font('Helvetica').fontSize(10);
+    doc.y = licenseY + doc.currentLineHeight() * 1.2;
     
-    const startY = doc.y;
-    const startX = doc.x;
+    // Utiliser addFieldRow pour aligner correctement les informations
+    // Permis de conduire et adresse sur la même ligne
+    const licenseLabel = `${texts.licenseNumber}: `;
+    const licenseValue = clientData.main_driver_license_number || '';
+    const addressLabel = `${texts.address}: `;
+    const addressValue = clientData.main_driver_address || '';
+    addFieldRow(licenseLabel, licenseValue, addressLabel, addressValue);
     
-    // Informations du permis dans la colonne gauche
-    doc.text(`${texts.licenseNumber}: `, { continued: true });
-    doc.font('Helvetica-Bold').text(clientData.main_driver_license_number || '');
-    doc.font('Helvetica').moveDown(0.2);
+    // Date d'émission et ville sur la même ligne
+    const issueDateLabel = `${texts.issueDate}: `;
+    const issueDateValue = clientData.main_driver_license_issue_date || '';
+    const cityLabel = `${texts.city}: `;
+    const cityValue = clientData.main_driver_city || '';
+    addFieldRow(issueDateLabel, issueDateValue, cityLabel, cityValue);
     
-    doc.text(`${texts.issueDate}: `, { continued: true });
-    doc.font('Helvetica-Bold').text(clientData.main_driver_license_issue_date || '');
-    doc.font('Helvetica').moveDown(0.2);
+    // Date d'expiration et code postal sur la même ligne
+    const expiryLabel = `${texts.expiryDate}: `;
+    const expiryValue = clientData.main_driver_license_validity_date || '';
+    const postalLabel = `${texts.postalCode}: `;
+    const postalValue = clientData.main_driver_postal_code || '';
+    addFieldRow(expiryLabel, expiryValue, postalLabel, postalValue);
     
-    doc.text(`${texts.expiryDate}: `, { continued: true });
-    doc.font('Helvetica-Bold').text(clientData.main_driver_license_validity_date || '');
-    doc.font('Helvetica').moveDown(0.2);
-    
-    doc.text(`${texts.issuePlace}: `, { continued: true });
-    doc.font('Helvetica-Bold').text(clientData.main_driver_license_issue_place || '');
-    doc.font('Helvetica').moveDown(0.2);
-    
-    // Colonne droite: Adresse
-    doc.font('Helvetica-Bold').fontSize(10).text(texts.addressInfo, doc.page.margins.left + colWidth + 20, startY, { underline: true });
-    doc.font('Helvetica').fontSize(10);
-    
-    // Position pour la colonne droite
-    const rightColX = doc.page.margins.left + colWidth + 20;
-    let rightColY = startY + doc.currentLineHeight();
-    
-    // Informations d'adresse dans la colonne droite
-    doc.text(`${texts.address}: `, rightColX, rightColY, { continued: true });
-    doc.font('Helvetica-Bold').text(clientData.main_driver_address);
-    rightColY += doc.currentLineHeight() * 1.2;
-    
-    doc.font('Helvetica').text(`${texts.city}: `, rightColX, rightColY, { continued: true });
-    doc.font('Helvetica-Bold').text(clientData.main_driver_city);
-    rightColY += doc.currentLineHeight() * 1.2;
-    
-    doc.font('Helvetica').text(`${texts.postalCode}: `, rightColX, rightColY, { continued: true });
-    doc.font('Helvetica-Bold').text(clientData.main_driver_postal_code);
-    rightColY += doc.currentLineHeight() * 1.2;
-    
-    doc.font('Helvetica').text(`${texts.country}: `, rightColX, rightColY, { continued: true });
-    doc.font('Helvetica-Bold').text(clientData.main_driver_country);
-    rightColY += doc.currentLineHeight() * 1.2;
+    // Lieu d'émission et pays sur la même ligne
+    const issuePlaceLabel = `${texts.issuePlace}: `;
+    const issuePlaceValue = clientData.main_driver_license_issue_place || '';
+    const countryLabel = `${texts.country}: `;
+    const countryValue = clientData.main_driver_country || '';
+    addFieldRow(issuePlaceLabel, issuePlaceValue, countryLabel, countryValue);
     
     // Hôtel si présent
     if (clientData.main_driver_hotel) {
-      doc.font('Helvetica').text(`${texts.hotel}: `, rightColX, rightColY, { continued: true });
-      doc.font('Helvetica-Bold').text(clientData.main_driver_hotel);
-      rightColY += doc.currentLineHeight() * 1.2;
+      addField(`${texts.hotel}: `, clientData.main_driver_hotel, { moveDown: 0.2 });
     }
-    
-    // Revenir à la position la plus basse des deux colonnes
-    doc.y = Math.max(doc.y, rightColY);
     
     // Note sur les photos du permis (en petit et en italique)
     doc.moveDown(0.2);
@@ -560,17 +550,37 @@ function generatePDF(clientData) {
     addSectionTitle(texts.vehicleInformation);
     
     // Informations du véhicule en format compact (deux colonnes)
-    addFieldRow(`${texts.pickupDate}: `, clientData.pickup_date, `${texts.returnDate}: `, clientData.return_date);
-    addFieldRow(`${texts.pickupLocation}: `, clientData.pickup_location, `${texts.returnLocation}: `, clientData.return_location);
-    addField(`${texts.vehicleCategory}: `, clientData.vehicle_category);
+    // Utiliser des variables pour s'assurer que les étiquettes sont bien alignées
+    const pickupDateLabel = `${texts.pickupDate}: `;
+    const pickupDateValue = clientData.pickup_date || '';
+    const returnDateLabel = `${texts.returnDate}: `;
+    const returnDateValue = clientData.return_date || '';
+    addFieldRow(pickupDateLabel, pickupDateValue, returnDateLabel, returnDateValue);
+    
+    const pickupLocationLabel = `${texts.pickupLocation}: `;
+    const pickupLocationValue = clientData.pickup_location || '';
+    const returnLocationLabel = `${texts.returnLocation}: `;
+    const returnLocationValue = clientData.return_location || '';
+    addFieldRow(pickupLocationLabel, pickupLocationValue, returnLocationLabel, returnLocationValue);
+    
+    addField(`${texts.vehicleCategory}: `, clientData.vehicle_category || '', { moveDown: 0.2 });
     
     // Carte de crédit principale - titre avec fond jaune
     doc.moveDown(0.3);
     addSectionTitle(texts.mainCreditCard);
     
     // Informations de la carte de crédit principale en format compact
-    addFieldRow(`${texts.cardType}: `, clientData.main_driver_credit_card_type || '', `${texts.cardNumber}: `, clientData.main_driver_credit_card || '');
-    addFieldRow(`${texts.expiryDate}: `, clientData.main_driver_credit_card_expiry || '', `${texts.cardHolder}: `, `${clientData.main_driver_name || ''} ${clientData.main_driver_firstname || ''}`);
+    const cardTypeLabel = `${texts.cardType}: `;
+    const cardTypeValue = clientData.main_driver_credit_card_type || '';
+    const cardNumberLabel = `${texts.cardNumber}: `;
+    const cardNumberValue = clientData.main_driver_credit_card || '';
+    addFieldRow(cardTypeLabel, cardTypeValue, cardNumberLabel, cardNumberValue);
+    
+    const cardExpiryLabel = `${texts.expiryDate}: `;
+    const cardExpiryValue = clientData.main_driver_credit_card_expiry || '';
+    const cardHolderLabel = `${texts.cardHolder}: `;
+    const cardHolderValue = `${clientData.main_driver_name || ''} ${clientData.main_driver_firstname || ''}`;
+    addFieldRow(cardExpiryLabel, cardExpiryValue, cardHolderLabel, cardHolderValue);
     
     // Carte de crédit additionnelle en format compact
     if (clientData.has_additional_card === 'true' || clientData.has_additional_card === true) {
@@ -578,8 +588,17 @@ function generatePDF(clientData) {
       addSectionTitle(texts.additionalCreditCard);
       
       // Informations de la carte de crédit additionnelle en format compact
-      addFieldRow(`${texts.cardType}: `, clientData.additional_card_type || '', `${texts.cardNumber}: `, clientData.additional_card_number || '');
-      addFieldRow(`${texts.expiryDate}: `, clientData.additional_card_expiry_date || '', `${texts.cardHolder}: `, clientData.additional_card_holder_name || '');
+      const addCardTypeLabel = `${texts.cardType}: `;
+      const addCardTypeValue = clientData.additional_card_type || '';
+      const addCardNumberLabel = `${texts.cardNumber}: `;
+      const addCardNumberValue = clientData.additional_card_number || '';
+      addFieldRow(addCardTypeLabel, addCardTypeValue, addCardNumberLabel, addCardNumberValue);
+      
+      const addCardExpiryLabel = `${texts.expiryDate}: `;
+      const addCardExpiryValue = clientData.additional_card_expiry_date || '';
+      const addCardHolderLabel = `${texts.cardHolder}: `;
+      const addCardHolderValue = clientData.additional_card_holder_name || '';
+      addFieldRow(addCardExpiryLabel, addCardExpiryValue, addCardHolderLabel, addCardHolderValue);
     }
     
     // Signature (sur la même page si possible)
