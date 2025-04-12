@@ -296,6 +296,44 @@ function generatePDF(clientData) {
     // Pipe le PDF vers le stream
     doc.pipe(pdfStream);
     
+    // Fonction d'aide pour ajouter des champs avec étiquette et valeur alignés
+    const addField = (label, value, options = {}) => {
+      const { bold = true, labelWidth = 150, moveDown = 0.5 } = options;
+      const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      
+      doc.font('Helvetica').text(label, {
+        continued: true,
+        width: labelWidth
+      });
+      
+      if (bold && value) {
+        doc.font('Helvetica-Bold');
+      }
+      
+      doc.text(value || '', {
+        continued: false
+      });
+      
+      doc.font('Helvetica');
+      doc.moveDown(moveDown);
+    };
+    
+    // Fonction d'aide pour créer des titres de section avec fond coloré
+    const addSectionTitle = (text) => {
+      const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      doc.moveDown(0.5);
+      const y = doc.y;
+      
+      doc.save();
+      doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
+      doc.rect(doc.page.margins.left, y, pageWidth, 20).fill();
+      doc.fillColor('#333333'); // Couleur du texte
+      doc.fontSize(14).font('Helvetica-Bold').text(text, doc.page.margins.left + 5, y + 5, { width: pageWidth - 10 });
+      doc.restore();
+      doc.moveDown(1);
+      doc.font('Helvetica').fontSize(12);
+    };
+    
     // Déterminer la langue
     const isFrench = clientData.language === 'fr';
     
@@ -327,7 +365,13 @@ function generatePDF(clientData) {
       cardNumber: isFrench ? 'Numéro de carte' : 'Card number',
       cardHolder: isFrench ? 'Nom du titulaire' : 'Card holder name',
       signature: isFrench ? 'Signature' : 'Signature',
-      date: isFrench ? 'Date' : 'Date'
+      date: isFrench ? 'Date' : 'Date',
+      vehicleInformation: isFrench ? 'Informations du Véhicule' : 'Vehicle Information',
+      pickupDate: isFrench ? 'Date de prise en charge' : 'Pickup date',
+      returnDate: isFrench ? 'Date de retour' : 'Return date',
+      pickupLocation: isFrench ? 'Lieu de prise en charge' : 'Pickup location',
+      returnLocation: isFrench ? 'Lieu de retour' : 'Return location',
+      vehicleCategory: isFrench ? 'Catégorie de véhicule' : 'Vehicle category'
     };
     
     // Définir la police et la taille de base
@@ -365,64 +409,52 @@ function generatePDF(clientData) {
     // Revenir à la police normale pour le reste du document
     doc.font('Helvetica').fontSize(12);
     
-    // Conducteur principal - titre avec fond gris
-    doc.save();
-    doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
-    doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
-    doc.fillColor('#333333'); // Couleur du texte
-    doc.fontSize(14).font('Helvetica-Bold').text(texts.mainDriver, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
-    doc.restore();
-    doc.moveDown();
+    // Conducteur principal - titre avec fond jaune
+    addSectionTitle(texts.mainDriver);
     
-    // Informations du conducteur principal - format en deux colonnes
-    doc.fontSize(12).font('Helvetica');
-    const leftColumnWidth = 250;
-    const rightColumnWidth = pageWidth - leftColumnWidth;
+    // Informations du conducteur principal avec alignement amélioré
+    const labelWidth = 180; // Largeur fixe pour toutes les étiquettes
     
-    // Première ligne
-    doc.text(`${texts.name}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_name}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.firstname}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_firstname}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.birthDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_birth_date}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.birthPlace}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_birth_place}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.nationality}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_nationality || ''}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.phone}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_phone}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.email}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_email}`, { continued: false }).font('Helvetica');
-    doc.moveDown();
-    doc.text(`${texts.expiryDate}: ${clientData.main_driver_license_validity_date || ''}`);
-    doc.text(`${texts.issuePlace}: ${clientData.main_driver_license_issue_place || ''}`);
-    
-    // Note sur les photos du permis
-    doc.moveDown();
-    doc.fontSize(10).text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
-    doc.moveDown();
+    // Informations personnelles
+    addField(`${texts.name}: `, clientData.main_driver_name);
+    addField(`${texts.firstname}: `, clientData.main_driver_firstname);
+    addField(`${texts.birthDate}: `, clientData.main_driver_birth_date);
+    addField(`${texts.birthPlace}: `, clientData.main_driver_birth_place);
+    addField(`${texts.nationality}: `, clientData.main_driver_nationality || '');
+    addField(`${texts.phone}: `, clientData.main_driver_phone);
+    addField(`${texts.email}: `, clientData.main_driver_email);
+    doc.moveDown(0.5);
     
     // Informations du permis de conduire
     doc.moveDown(0.5);
     doc.fontSize(12).font('Helvetica-Bold').text(isFrench ? 'Permis de conduire:' : 'Driver\'s License:', { underline: true });
-    doc.font('Helvetica');
-    doc.text(`${texts.licenseNumber}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_license_number || ''}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.issueDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_license_issue_date || ''}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.expiryDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_license_validity_date || ''}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.issuePlace}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_license_issue_place || ''}`, { continued: false }).font('Helvetica');
+    doc.font('Helvetica').fontSize(12);
+    
+    // Utiliser la fonction addField pour un alignement cohérent
+    addField(`${texts.licenseNumber}: `, clientData.main_driver_license_number || '');
+    addField(`${texts.issueDate}: `, clientData.main_driver_license_issue_date || '');
+    addField(`${texts.expiryDate}: `, clientData.main_driver_license_validity_date || '');
+    addField(`${texts.issuePlace}: `, clientData.main_driver_license_issue_place || '');
     
     // Note sur les photos du permis
     doc.moveDown(0.5);
     doc.fontSize(10).font('Helvetica-Oblique').text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
+    doc.font('Helvetica').fontSize(12);
     
     // Adresse
     doc.moveDown(0.5);
     doc.fontSize(12).font('Helvetica-Bold').text(isFrench ? 'Adresse:' : 'Address:', { underline: true });
-    doc.font('Helvetica');
-    doc.text(`${texts.address}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_address}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.city}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_city}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.postalCode}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_postal_code}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.country}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_country}`, { continued: false }).font('Helvetica');
-    doc.moveDown();
-    doc.text(`${texts.phone}: ${clientData.main_driver_phone}`);
-    doc.text(`${texts.email}: ${clientData.main_driver_email}`);
+    doc.font('Helvetica').fontSize(12);
     
+    // Utiliser la fonction addField pour un alignement cohérent
+    addField(`${texts.address}: `, clientData.main_driver_address);
+    addField(`${texts.city}: `, clientData.main_driver_city);
+    addField(`${texts.postalCode}: `, clientData.main_driver_postal_code);
+    addField(`${texts.country}: `, clientData.main_driver_country);
+    
+    // Ne pas répéter les informations déjà affichées
     if (clientData.main_driver_hotel) {
-      doc.text(`${texts.hotel}: ${clientData.main_driver_hotel}`);
+      addField(`${texts.hotel}: `, clientData.main_driver_hotel);
     }
     
     doc.moveDown();
@@ -432,90 +464,65 @@ function generatePDF(clientData) {
       doc.moveDown(1);
       
       // Titre du conducteur additionnel avec fond jaune
-      doc.save();
-      doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
-      doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
-      doc.fillColor('#333333'); // Couleur du texte
-      doc.fontSize(14).font('Helvetica-Bold').text(texts.additionalDriver, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
-      doc.restore();
-      doc.moveDown();
+      addSectionTitle(texts.additionalDriver);
       
-      // Informations du conducteur additionnel
-      doc.fontSize(12).font('Helvetica');
-      doc.text(`${texts.name}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_name}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.firstname}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_firstname}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.birthDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_birth_date}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.birthPlace}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_birth_place}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.nationality}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_nationality || ''}`, { continued: false }).font('Helvetica');
+      // Informations du conducteur additionnel avec alignement cohérent
+      addField(`${texts.name}: `, clientData.additional_driver_name);
+      addField(`${texts.firstname}: `, clientData.additional_driver_firstname);
+      addField(`${texts.birthDate}: `, clientData.additional_driver_birth_date);
+      addField(`${texts.birthPlace}: `, clientData.additional_driver_birth_place);
+      addField(`${texts.nationality}: `, clientData.additional_driver_nationality || '');
       
       // Informations du permis de conduire additionnel
       doc.moveDown(0.5);
       doc.fontSize(12).font('Helvetica-Bold').text(isFrench ? 'Permis de conduire:' : 'Driver\'s License:', { underline: true });
-      doc.font('Helvetica');
-      doc.text(`${texts.licenseNumber}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_license_number || ''}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.issueDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_license_issue_date || ''}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.expiryDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_license_validity_date || ''}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.issuePlace}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_driver_license_issue_place || ''}`, { continued: false }).font('Helvetica');
+      doc.font('Helvetica').fontSize(12);
+      
+      // Utiliser la fonction addField pour un alignement cohérent
+      addField(`${texts.licenseNumber}: `, clientData.additional_driver_license_number || '');
+      addField(`${texts.issueDate}: `, clientData.additional_driver_license_issue_date || '');
+      addField(`${texts.expiryDate}: `, clientData.additional_driver_license_validity_date || '');
+      addField(`${texts.issuePlace}: `, clientData.additional_driver_license_issue_place || '');
       
       // Note sur les photos du permis
       doc.moveDown(0.5);
       doc.fontSize(10).font('Helvetica-Oblique').text(isFrench ? 'Note: Les photos du permis de conduire sont jointes séparément à l\'email.' : 'Note: Driver\'s license photos are attached separately to the email.');
-      doc.moveDown();
+      doc.font('Helvetica').fontSize(12);
+      doc.moveDown(0.5);
     }
     
     // Informations sur le véhicule - titre avec fond jaune
     doc.moveDown(1);
-    doc.save();
-    doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
-    doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
-    doc.fillColor('#333333'); // Couleur du texte
-    doc.fontSize(14).font('Helvetica-Bold').text(texts.vehicleInformation, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
-    doc.restore();
-    doc.moveDown();
+    addSectionTitle(texts.vehicleInformation);
     
-    // Informations du véhicule
-    doc.fontSize(12).font('Helvetica');
-    doc.text(`${texts.pickupDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.pickup_date}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.returnDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.return_date}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.pickupLocation}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.pickup_location}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.returnLocation}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.return_location}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.vehicleCategory}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.vehicle_category}`, { continued: false }).font('Helvetica');
-    doc.moveDown();
+    // Informations du véhicule avec alignement cohérent
+    addField(`${texts.pickupDate}: `, clientData.pickup_date);
+    addField(`${texts.returnDate}: `, clientData.return_date);
+    addField(`${texts.pickupLocation}: `, clientData.pickup_location);
+    addField(`${texts.returnLocation}: `, clientData.return_location);
+    addField(`${texts.vehicleCategory}: `, clientData.vehicle_category);
+    doc.moveDown(0.5);
     
     // Carte de crédit principale - titre avec fond jaune
-    doc.moveDown(1);
-    doc.save();
-    doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
-    doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
-    doc.fillColor('#333333'); // Couleur du texte
-    doc.fontSize(14).font('Helvetica-Bold').text(texts.mainCreditCard, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
-    doc.restore();
-    doc.moveDown();
+    doc.moveDown(0.5);
+    addSectionTitle(texts.mainCreditCard);
     
-    // Informations de la carte de crédit principale
-    doc.fontSize(12).font('Helvetica');
-    doc.text(`${texts.cardType}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_credit_card_type || ''}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.cardNumber}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_credit_card || ''}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.expiryDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_credit_card_expiry || ''}`, { continued: false }).font('Helvetica');
-    doc.text(`${texts.cardHolder}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.main_driver_name || ''} ${clientData.main_driver_firstname || ''}`, { continued: false }).font('Helvetica');
+    // Informations de la carte de crédit principale avec alignement cohérent
+    addField(`${texts.cardType}: `, clientData.main_driver_credit_card_type || '');
+    addField(`${texts.cardNumber}: `, clientData.main_driver_credit_card || '');
+    addField(`${texts.expiryDate}: `, clientData.main_driver_credit_card_expiry || '');
+    addField(`${texts.cardHolder}: `, `${clientData.main_driver_name || ''} ${clientData.main_driver_firstname || ''}`);
     
     // Carte de crédit additionnelle
     if (clientData.has_additional_card === 'true' || clientData.has_additional_card === true) {
-      doc.moveDown(1);
-      doc.save();
-      doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
-      doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
-      doc.fillColor('#333333'); // Couleur du texte
-      doc.fontSize(14).font('Helvetica-Bold').text(texts.additionalCreditCard, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
-      doc.restore();
-      doc.moveDown();
+      doc.moveDown(0.5);
+      addSectionTitle(texts.additionalCreditCard);
       
-      // Informations de la carte de crédit additionnelle
-      doc.fontSize(12).font('Helvetica');
-      doc.text(`${texts.cardType}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_card_type || ''}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.cardNumber}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_card_number || ''}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.expiryDate}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_card_expiry_date || ''}`, { continued: false }).font('Helvetica');
-      doc.text(`${texts.cardHolder}: `, { continued: true }).font('Helvetica-Bold').text(`${clientData.additional_card_holder_name || ''}`, { continued: false }).font('Helvetica');
+      // Informations de la carte de crédit additionnelle avec alignement cohérent
+      addField(`${texts.cardType}: `, clientData.additional_card_type || '');
+      addField(`${texts.cardNumber}: `, clientData.additional_card_number || '');
+      addField(`${texts.expiryDate}: `, clientData.additional_card_expiry_date || '');
+      addField(`${texts.cardHolder}: `, clientData.additional_card_holder_name || '');
     }
     
     // Signature
@@ -523,29 +530,34 @@ function generatePDF(clientData) {
       doc.addPage();
       
       // Titre de la signature avec fond jaune
-      doc.save();
-      doc.fillColor('#f0c808'); // Couleur jaune de RAIATEA RENT CAR
-      doc.rect(doc.page.margins.left, doc.y, pageWidth, 20).fill();
-      doc.fillColor('#333333'); // Couleur du texte
-      doc.fontSize(14).font('Helvetica-Bold').text(texts.signature, doc.page.margins.left + 5, doc.y - 17, { width: pageWidth - 10 });
-      doc.restore();
-      doc.moveDown();
+      addSectionTitle(texts.signature);
       
       try {
+        // Centrer la signature sur la page
+        const centerX = doc.page.width / 2;
+        
         // Ajouter la signature
         doc.image(clientData.signature_data, {
           fit: [300, 150],
           align: 'center'
         });
         
-        // Ajouter une ligne pour la date
+        // Ajouter une ligne pour la date avec un format cohérent
         doc.moveDown(2);
         const signatureDate = new Date().toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', { 
           year: 'numeric', 
           month: 'long', 
           day: 'numeric' 
         });
-        doc.fontSize(10).text(isFrench ? `Date: ${signatureDate}` : `Date: ${signatureDate}`, { align: 'right' });
+        
+        // Ajouter une ligne horizontale avant la date
+        const lineY = doc.y;
+        doc.moveTo(doc.page.margins.left + 350, lineY)
+           .lineTo(doc.page.width - doc.page.margins.right, lineY)
+           .stroke();
+        
+        // Ajouter la date sous la ligne
+        doc.fontSize(10).text(`${texts.date}: ${signatureDate}`, doc.page.margins.left + 350, lineY + 5, { align: 'left' });
       } catch (error) {
         console.error('Erreur lors de l\'ajout de la signature au PDF:', error);
       }
