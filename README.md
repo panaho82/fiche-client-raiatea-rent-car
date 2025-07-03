@@ -34,10 +34,13 @@ npm install
 # Créez un fichier .env à la racine du projet avec les informations suivantes :
 PORT=3000
 EMAIL_TO=raiatearentcar@mail.pf
-EMAIL_USER=votre_adresse_email
-EMAIL_PASS=votre_mot_de_passe_email
-EMAIL_HOST=smtp.votre-fournisseur.com
+
+# Configuration Brevo (recommandé)
+EMAIL_HOST=smtp-relay.brevo.com
 EMAIL_PORT=587
+EMAIL_USER=votre_email_brevo@domain.com
+EMAIL_PASS=votre_mot_de_passe_smtp_brevo
+BREVO_VERIFIED_SENDER=raiatearentcar@mail.pf
 
 # Démarrer l'application
 npm start
@@ -45,7 +48,7 @@ npm start
 
 ## Déploiement sur Render
 
-Cette application est configurée pour être facilement déployée sur Render.com :
+Cette application est configurée pour être facilement déployée sur Render.com avec Brevo :
 
 1. Créez un compte sur [Render](https://render.com/)
 2. Cliquez sur "New" puis "Web Service"
@@ -58,18 +61,31 @@ Cette application est configurée pour être facilement déployée sur Render.co
 
 5. Ajoutez les variables d'environnement suivantes :
    - `EMAIL_TO` : raiatearentcar@mail.pf
-   - `EMAIL_USER` : votre_adresse_email
-   - `EMAIL_PASS` : votre_mot_de_passe
-   - `EMAIL_HOST` : smtp.votre-fournisseur.com
+   - `EMAIL_HOST` : smtp-relay.brevo.com
    - `EMAIL_PORT` : 587
+   - `EMAIL_USER` : votre_email_brevo@domain.com
+   - `EMAIL_PASS` : votre_mot_de_passe_smtp_brevo
+   - `BREVO_VERIFIED_SENDER` : raiatearentcar@mail.pf
 
 6. Cliquez sur "Create Web Service"
 
 L'application sera automatiquement déployée et accessible via l'URL fournie par Render.
 
-4. Configurez les variables d'environnement:
-   - Renommez le fichier `.env.example` en `.env`
-   - Modifiez les valeurs selon votre configuration (notamment les informations SMTP pour l'envoi d'emails)
+## Configuration Email avec Brevo
+
+### Étapes pour configurer Brevo :
+
+1. **Créer un compte Brevo** sur [brevo.com](https://brevo.com)
+2. **Ajouter un expéditeur** : Allez dans "Expéditeurs et IP" > "Expéditeurs" et ajoutez `raiatearentcar@mail.pf`
+3. **Générer un mot de passe SMTP** : Allez dans "Paramètres" > "Clés API et SMTP" > "SMTP"
+4. **Configurer les variables d'environnement** avec les paramètres Brevo
+
+### Avantages de Brevo :
+- **Plan gratuit** : 300 emails/jour (9000/mois)
+- **Fiabilité** : Excellente délivrabilité
+- **Support français** : Assistance en français
+- **Interface simple** : Facile à utiliser
+- **Coût abordable** : Plans payants à partir de 25€/mois
 
 ## Lancement de l'application
 
