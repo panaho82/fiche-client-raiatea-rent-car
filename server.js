@@ -1263,18 +1263,12 @@ app.get('/test-email', (req, res) => {
     } else {
       console.log('SUCCÈS VÉRIFICATION SMTP - Serveur prêt');
       
-      // Si la vérification réussit, envoyer l'email de test
-      sendTestEmail(transporter, res);
-    }
-  });
-});
-
-  // Email de test simple
-  const mailOptions = {
-    from: process.env.BREVO_VERIFIED_SENDER || process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
-    to: process.env.EMAIL_TO,
-    subject: 'TEST - Configuration Brevo fonctionnelle',
-    text: `Ceci est un email de test pour vérifier la configuration Brevo.
+      // Email de test simple
+      const mailOptions = {
+        from: process.env.BREVO_VERIFIED_SENDER || process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
+        to: process.env.EMAIL_TO,
+        subject: 'TEST - Configuration Brevo fonctionnelle',
+        text: `Ceci est un email de test pour vérifier la configuration Brevo.
 
 Date: ${new Date().toLocaleString()}
 Serveur: ${process.env.EMAIL_HOST}
@@ -1283,31 +1277,33 @@ Port: ${process.env.EMAIL_PORT}
 Si vous recevez cet email, la configuration Brevo fonctionne parfaitement !
 
 RAIATEA RENT CAR - Système de formulaires`
-  };
-  
-  console.log('Envoi de l\'email de test...');
-  console.log('De:', mailOptions.from);
-  console.log('À:', mailOptions.to);
-  
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('ERREUR ENVOI EMAIL TEST:', error);
-      res.status(500).json({ 
-        error: 'Erreur lors de l\'envoi du test', 
-        details: error.message,
-        code: error.code
-      });
-    } else {
-      console.log('SUCCÈS ENVOI EMAIL TEST:', info.response);
-      res.json({ 
-        success: true, 
-        message: 'Email de test envoyé avec succès',
-        messageId: info.messageId,
-        response: info.response
+      };
+      
+      console.log('Envoi de l\'email de test...');
+      console.log('De:', mailOptions.from);
+      console.log('À:', mailOptions.to);
+      
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('ERREUR ENVOI EMAIL TEST:', error);
+          res.status(500).json({ 
+            error: 'Erreur lors de l\'envoi du test', 
+            details: error.message,
+            code: error.code
+          });
+        } else {
+          console.log('SUCCÈS ENVOI EMAIL TEST:', info.response);
+          res.json({ 
+            success: true, 
+            message: 'Email de test envoyé avec succès',
+            messageId: info.messageId,
+            response: info.response
+          });
+        }
       });
     }
   });
-}
+});
 
 // Démarrer le serveur
 app.listen(port, () => {
