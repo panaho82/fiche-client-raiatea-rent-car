@@ -8,9 +8,177 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
+const BrevoApiService = require('./brevo_api_service');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Initialiser le service API Brevo
+const brevoApiService = new BrevoApiService();
+
+// Fonction pour envoyer un email (API Brevo en priorité, SMTP en fallback)
+async function sendEmailWithFallback(clientData, attachments = []) {
+  console.log('=== DÉBUT ENVOI EMAIL ===');
+  
+  // Essayer l'API Brevo en premier
+  if (brevoApiService.isConfigured()) {
+    console.log('📧 Tentative d\'envoi via API Brevo...');
+    
+    try {
+      const result = await brevoApiService.sendEmail(clientData, attachments);
+      
+      if (result.success) {
+        console.log('✅ EMAIL ENVOYÉ AVEC SUCCÈS VIA API BREVO');
+        console.log('Message ID:', result.messageId);
+        return result;
+      } else {
+        console.error('❌ Échec API Brevo, passage au SMTP...');
+        console.error('Erreur:', result.error);
+      }
+    } catch (error) {
+      console.error('❌ Exception API Brevo, passage au SMTP...');
+      console.error('Erreur:', error.message);
+    }
+  } else {
+    console.log('⚠️ API Brevo non configurée (BREVO_API_KEY manquante), utilisation SMTP...');
+  }
+  
+  // Fallback vers SMTP
+  console.log('📧 Tentative d\'envoi via SMTP...');
+  return await sendEmailViaSMTP(clientData, attachments);
+}
+
+// Fonction SMTP (ancien système)
+async function sendEmailViaSMTP(clientData, attachments = []) {
+  return new Promise((resolve, reject) => {
+    try {
+      console.log('=== CONFIGURATION EMAIL SMTP ===');
+      console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
+      console.log('EMAIL_PORT:', process.env.EMAIL_PORT);
+      console.log('EMAIL_USER:', process.env.EMAIL_USER);
+      console.log('EMAIL_TO:', process.env.EMAIL_TO);
+      console.log('Mot de passe SMTP défini:', process.env.EMAIL_PASS ? 'OUI' : 'NON');
+      
+      // Configurer le transporteur d'email
+      let transporterConfig;
+      
+      // Vérifier si nous utilisons SendGrid (recommandé pour Render)
+      if (process.env.USE_SENDGRID === 'true' && process.env.SENDGRID_API_KEY) {
+        console.log('Utilisation de SendGrid...');
+        // Configuration pour SendGrid
+        transporterConfig = {
+          service: 'SendGrid',
+          auth: {
+            user: 'apikey',
+            pass: process.env.SENDGRID_API_KEY
+          }
+        };
+      } else {
+        console.log('Utilisation de la configuration SMTP standard...');
+        // Configuration SMTP standard
+        transporterConfig = {
+          host: process.env.EMAIL_HOST,
+          port: process.env.EMAIL_PORT,
+          secure: false,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+          },
+          tls: {
+            rejectUnauthorized: false
+          },
+          connectionTimeout: 60000,
+          greetingTimeout: 30000,
+          socketTimeout: 60000
+        };
+      }
+      
+      console.log('Configuration du transporteur créée');
+      const transporter = nodemailer.createTransporter(transporterConfig);
+      
+      // Déterminer la langue
+      const isFrench = clientData.language === 'fr';
+      
+      // Textes selon la langue
+      const emailTexts = {
+        subject: isFrench 
+          ? `Nouvelle fiche client - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})` 
+          : `New client form - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})`,
+        intro: isFrench 
+          ? `Veuillez trouver ci-joint la fiche client de ${clientData.main_driver_name} ${clientData.main_driver_firstname}.` 
+          : `Please find attached the client form for ${clientData.main_driver_name} ${clientData.main_driver_firstname}.`,
+        clientId: isFrench ? 'ID Client' : 'Client ID',
+        name: isFrench ? 'Nom' : 'Name',
+        firstname: isFrench ? 'Prénom' : 'Firstname',
+        email: 'Email',
+        phone: isFrench ? 'Téléphone' : 'Phone',
+        submissionDate: isFrench ? 'Date de soumission' : 'Submission date'
+      };
+      
+      // Générer le contenu HTML de l'email
+      const emailHtml = generateEmailTemplate(clientData, emailTexts, attachments);
+      
+      // Envoi de l'email
+      const mailOptions = {
+        from: process.env.BREVO_VERIFIED_SENDER || process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
+        to: process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
+        subject: emailTexts.subject,
+        html: emailHtml,
+        text: `${emailTexts.intro}
+
+${emailTexts.clientId}: ${clientData.id}
+${emailTexts.name}: ${clientData.main_driver_name}
+${emailTexts.firstname}: ${clientData.main_driver_firstname}
+${emailTexts.email}: ${clientData.main_driver_email}
+${emailTexts.phone}: ${clientData.main_driver_phone}
+${emailTexts.submissionDate}: ${new Date().toLocaleString()}
+
+Les photos des permis de conduire sont jointes à cet email.
+`,
+        attachments: attachments
+      };
+      
+      console.log('=== OPTIONS EMAIL SMTP ===');
+      console.log('De:', mailOptions.from);
+      console.log('À:', mailOptions.to);
+      console.log('Sujet:', mailOptions.subject);
+      
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('=== ERREUR ENVOI EMAIL SMTP ===');
+          console.error('Type d\'erreur:', error.name);
+          console.error('Message d\'erreur:', error.message);
+          console.error('Code d\'erreur:', error.code);
+          console.error('=== FIN ERREUR EMAIL SMTP ===');
+          resolve({
+            success: false,
+            error: error.message,
+            method: 'SMTP'
+          });
+        } else {
+          console.log('=== EMAIL ENVOYÉ AVEC SUCCÈS VIA SMTP ===');
+          console.log('Response:', info.response);
+          console.log('Message ID:', info.messageId);
+          console.log('=== FIN SUCCÈS EMAIL SMTP ===');
+          resolve({
+            success: true,
+            messageId: info.messageId,
+            method: 'SMTP',
+            data: info
+          });
+        }
+      });
+    } catch (emailError) {
+      console.error('=== ERREUR CONFIGURATION EMAIL SMTP ===');
+      console.error('Erreur lors de la configuration de l\'email:', emailError);
+      resolve({
+        success: false,
+        error: emailError.message,
+        method: 'SMTP'
+      });
+    }
+  });
+}
 
 // Fonction pour générer le template HTML d'email professionnel
 function generateEmailTemplate(clientData, emailTexts, attachments) {
@@ -997,208 +1165,84 @@ function insertClientData(clientData, pdfPath) {
     } else {
       console.log('Données insérées dans la base de données avec succès');
       
-      // Tenter d'envoyer l'email en arrière-plan
+      // Préparer les pièces jointes pour l'email
+      const attachments = [
+        {
+          filename: `${clientData.id}_${clientData.main_driver_name}_${clientData.main_driver_firstname}.pdf`,
+          path: pdfPath
+        }
+      ];
+      
+      console.log('Nombre de pièces jointes de base:', attachments.length);
+        
+      // Ajouter les photos du permis de conduire en pièces jointes si disponibles
+      if (clientData.main_driver_license_front_data) {
+        const frontImageData = clientData.main_driver_license_front_data.split(',')[1];
+        if (frontImageData) {
+          attachments.push({
+            filename: `${clientData.id}_permis_conducteur_principal_recto.jpg`,
+            content: frontImageData,
+            encoding: 'base64'
+          });
+          console.log('Photo permis recto ajoutée');
+        }
+      }
+      
+      if (clientData.main_driver_license_back_data) {
+        const backImageData = clientData.main_driver_license_back_data.split(',')[1];
+        if (backImageData) {
+          attachments.push({
+            filename: `${clientData.id}_permis_conducteur_principal_verso.jpg`,
+            content: backImageData,
+            encoding: 'base64'
+          });
+          console.log('Photo permis verso ajoutée');
+        }
+      }
+      
+      // Ajouter les photos du permis du conducteur additionnel si disponibles
+      if (clientData.additional_driver_license_front_data) {
+        const frontImageData = clientData.additional_driver_license_front_data.split(',')[1];
+        if (frontImageData) {
+          attachments.push({
+            filename: `${clientData.id}_permis_conducteur_additionnel_recto.jpg`,
+            content: frontImageData,
+            encoding: 'base64'
+          });
+          console.log('Photo permis additionnel recto ajoutée');
+        }
+      }
+      
+      if (clientData.additional_driver_license_back_data) {
+        const backImageData = clientData.additional_driver_license_back_data.split(',')[1];
+        if (backImageData) {
+          attachments.push({
+            filename: `${clientData.id}_permis_conducteur_additionnel_verso.jpg`,
+            content: backImageData,
+            encoding: 'base64'
+          });
+          console.log('Photo permis additionnel verso ajoutée');
+        }
+      }
+      
+      console.log('Total des pièces jointes:', attachments.length);
+      
+      // Envoyer l'email via API Brevo ou SMTP fallback
       try {
-        console.log('=== DÉBUT CONFIGURATION EMAIL ===');
-        console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
-        console.log('EMAIL_PORT:', process.env.EMAIL_PORT);
-        console.log('EMAIL_USER:', process.env.EMAIL_USER);
-        console.log('EMAIL_TO:', process.env.EMAIL_TO);
-        console.log('Mot de passe SMTP défini:', process.env.EMAIL_PASS ? 'OUI' : 'NON');
+        const emailResult = await sendEmailWithFallback(clientData, attachments);
         
-        // Configurer le transporteur d'email
-        let transporterConfig;
-        
-        // Vérifier si nous utilisons SendGrid (recommandé pour Render)
-        if (process.env.USE_SENDGRID === 'true' && process.env.SENDGRID_API_KEY) {
-          console.log('Utilisation de SendGrid...');
-          // Configuration pour SendGrid
-          transporterConfig = {
-            service: 'SendGrid',
-            auth: {
-              user: 'apikey',
-              pass: process.env.SENDGRID_API_KEY
-            }
-          };
+        if (emailResult.success) {
+          console.log(`✅ EMAIL ENVOYÉ AVEC SUCCÈS VIA ${emailResult.method || 'API BREVO'}`);
+          console.log('Message ID:', emailResult.messageId);
         } else {
-          console.log('Utilisation de la configuration SMTP standard...');
-          // Configuration SMTP standard
-          transporterConfig = {
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            secure: false,
-            auth: {
-              user: process.env.EMAIL_USER,
-              pass: process.env.EMAIL_PASS
-            },
-            tls: {
-              rejectUnauthorized: false
-            },
-            // Augmenter le délai d'attente pour éviter les timeouts
-            connectionTimeout: 60000, // 60 secondes
-            greetingTimeout: 30000,   // 30 secondes
-            socketTimeout: 60000      // 60 secondes
-          };
+          console.error(`❌ ÉCHEC ENVOI EMAIL VIA ${emailResult.method || 'TOUS LES MOYENS'}`);
+          console.error('Erreur:', emailResult.error);
         }
-        
-        console.log('Configuration du transporteur créée');
-        const transporter = nodemailer.createTransport(transporterConfig);
-        
-        // Vérifier la configuration SMTP
-        console.log('Test de la connexion SMTP...');
-        transporter.verify(function(error, success) {
-          if (error) {
-            console.error('ERREUR DE VERIFICATION SMTP:', error);
-          } else {
-            console.log('SMTP - Serveur prêt à recevoir les emails');
-          }
-        });
-        
-        // Déterminer la langue
-        const isFrench = clientData.language === 'fr';
-        
-        // Textes selon la langue
-        const emailTexts = {
-          subject: isFrench 
-            ? `Nouvelle fiche client - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})` 
-            : `New client form - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})`,
-          intro: isFrench 
-            ? `Veuillez trouver ci-joint la fiche client de ${clientData.main_driver_name} ${clientData.main_driver_firstname}.` 
-            : `Please find attached the client form for ${clientData.main_driver_name} ${clientData.main_driver_firstname}.`,
-          clientId: isFrench ? 'ID Client' : 'Client ID',
-          name: isFrench ? 'Nom' : 'Name',
-          firstname: isFrench ? 'Prénom' : 'Firstname',
-          email: 'Email',
-          phone: isFrench ? 'Téléphone' : 'Phone',
-          submissionDate: isFrench ? 'Date de soumission' : 'Submission date'
-        };
-        
-        console.log('Sujet de l\'email:', emailTexts.subject);
-        
-        // Préparer les pièces jointes pour l'email
-        const attachments = [
-          {
-            filename: `${clientData.id}_${clientData.main_driver_name}_${clientData.main_driver_firstname}.pdf`,
-            path: pdfPath
-          }
-        ];
-        
-        console.log('Nombre de pièces jointes:', attachments.length);
-        
-        // Ajouter les photos du permis de conduire en pièces jointes si disponibles
-        if (clientData.main_driver_license_front_data) {
-          const frontImageData = clientData.main_driver_license_front_data.split(',')[1];
-          if (frontImageData) {
-            attachments.push({
-              filename: `${clientData.id}_permis_conducteur_principal_recto.jpg`,
-              content: frontImageData,
-              encoding: 'base64'
-            });
-            console.log('Photo permis recto ajoutée');
-          }
-        }
-        
-        if (clientData.main_driver_license_back_data) {
-          const backImageData = clientData.main_driver_license_back_data.split(',')[1];
-          if (backImageData) {
-            attachments.push({
-              filename: `${clientData.id}_permis_conducteur_principal_verso.jpg`,
-              content: backImageData,
-              encoding: 'base64'
-            });
-            console.log('Photo permis verso ajoutée');
-          }
-        }
-        
-        // Ajouter les photos du permis du conducteur additionnel si disponibles
-        if (clientData.additional_driver_license_front_data) {
-          const frontImageData = clientData.additional_driver_license_front_data.split(',')[1];
-          if (frontImageData) {
-            attachments.push({
-              filename: `${clientData.id}_permis_conducteur_additionnel_recto.jpg`,
-              content: frontImageData,
-              encoding: 'base64'
-            });
-            console.log('Photo permis additionnel recto ajoutée');
-          }
-        }
-        
-        if (clientData.additional_driver_license_back_data) {
-          const backImageData = clientData.additional_driver_license_back_data.split(',')[1];
-          if (backImageData) {
-            attachments.push({
-              filename: `${clientData.id}_permis_conducteur_additionnel_verso.jpg`,
-              content: backImageData,
-              encoding: 'base64'
-            });
-            console.log('Photo permis additionnel verso ajoutée');
-          }
-        }
-        
-        console.log('Total des pièces jointes:', attachments.length);
-        
-        // Générer le contenu HTML de l'email
-        const emailHtml = generateEmailTemplate(clientData, emailTexts, attachments);
-        
-        // Envoi de l'email
-        const mailOptions = {
-          // Pour Brevo, utiliser l'adresse vérifiée comme expéditeur
-          from: process.env.BREVO_VERIFIED_SENDER || process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
-          to: process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
-          subject: emailTexts.subject,
-          html: emailHtml,
-          text: `${emailTexts.intro}
-
-${emailTexts.clientId}: ${clientData.id}
-${emailTexts.name}: ${clientData.main_driver_name}
-${emailTexts.firstname}: ${clientData.main_driver_firstname}
-${emailTexts.email}: ${clientData.main_driver_email}
-${emailTexts.phone}: ${clientData.main_driver_phone}
-${emailTexts.submissionDate}: ${new Date().toLocaleString()}
-
-Les photos des permis de conduire sont jointes à cet email.
-`,
-          attachments: attachments
-        };
-        
-        console.log('=== OPTIONS EMAIL ===');
-        console.log('De:', mailOptions.from);
-        console.log('À:', mailOptions.to);
-        console.log('Sujet:', mailOptions.subject);
-        console.log('=== DÉBUT ENVOI EMAIL ===');
-        
-        // Définir un délai d'expiration pour l'envoi d'email
-        const emailTimeout = setTimeout(() => {
-          console.error('ERREUR: Délai d\'expiration dépassé pour l\'envoi d\'email (30 secondes)');
-        }, 30000); // 30 secondes de timeout
-        
-        transporter.sendMail(mailOptions, (error, info) => {
-          // Annuler le timeout car la réponse est arrivée
-          clearTimeout(emailTimeout);
-          
-          if (error) {
-            console.error('=== ERREUR ENVOI EMAIL ===');
-            console.error('Type d\'erreur:', error.name);
-            console.error('Message d\'erreur:', error.message);
-            console.error('Code d\'erreur:', error.code);
-            console.error('Commande:', error.command);
-            console.error('Réponse du serveur:', error.response);
-            console.error('Stack trace:', error.stack);
-            console.error('=== FIN ERREUR EMAIL ===');
-          } else {
-            console.log('=== EMAIL ENVOYÉ AVEC SUCCÈS ===');
-            console.log('Response:', info.response);
-            console.log('Message ID:', info.messageId);
-            console.log('Accepted:', info.accepted);
-            console.log('Rejected:', info.rejected);
-            console.log('=== FIN SUCCÈS EMAIL ===');
-          }
-        });
       } catch (emailError) {
-        console.error('=== ERREUR CONFIGURATION EMAIL ===');
-        console.error('Erreur lors de la configuration de l\'email:', emailError);
+        console.error('=== ERREUR CRITIQUE EMAIL ===');
+        console.error('Erreur lors de l\'envoi de l\'email:', emailError);
         console.error('Stack trace:', emailError.stack);
-        console.error('=== FIN ERREUR CONFIGURATION ===');
+        console.error('=== FIN ERREUR CRITIQUE ===');
       }
     }
   });
@@ -1404,129 +1448,158 @@ ${emailTexts.submissionDate}: ${new Date(client.submission_date).toLocaleString(
   });
 });
 
-// Route de test pour l'envoi d'email
-app.get('/test-email', (req, res) => {
+// Route de test pour l'envoi d'email (API Brevo + SMTP fallback)
+app.get('/test-email', async (req, res) => {
   console.log('=== TEST EMAIL DEMANDÉ ===');
+  console.log('BREVO_API_KEY:', process.env.BREVO_API_KEY ? 'Définie (' + process.env.BREVO_API_KEY.substring(0, 10) + '...)' : 'Non définie');
   console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
   console.log('EMAIL_PORT:', process.env.EMAIL_PORT);
   console.log('EMAIL_USER:', process.env.EMAIL_USER);
   console.log('EMAIL_TO:', process.env.EMAIL_TO);
   console.log('BREVO_VERIFIED_SENDER:', process.env.BREVO_VERIFIED_SENDER);
-  console.log('Mot de passe défini:', process.env.EMAIL_PASS ? 'OUI' : 'NON');
-  console.log('Longueur mot de passe:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0);
+  console.log('Mot de passe SMTP défini:', process.env.EMAIL_PASS ? 'OUI' : 'NON');
   
-  // Configuration du transporteur
-  const transporterConfig = {
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  };
-  
-  console.log('Création du transporteur...');
-  const transporter = nodemailer.createTransport(transporterConfig);
-  
-  // Test de vérification de la connexion
-  console.log('Test de vérification SMTP...');
-  transporter.verify(function(error, success) {
-    if (error) {
-      console.error('ÉCHEC VÉRIFICATION SMTP:', error);
-      return res.status(500).json({ 
-        error: 'Échec de vérification SMTP', 
-        details: error.message,
-        code: error.code 
-      });
-    } else {
-      console.log('SUCCÈS VÉRIFICATION SMTP - Serveur prêt');
+  try {
+    // Essayer d'abord avec l'API Brevo
+    if (brevoApiService.isConfigured()) {
+      console.log('🚀 Test via API Brevo...');
       
-      // Données de test pour l'email
-      const testClientData = {
-        id: 'TEST-' + Date.now(),
-        language: 'fr',
-        main_driver_name: 'TEST',
-        main_driver_firstname: 'Utilisateur',
-        main_driver_email: process.env.EMAIL_TO,
-        main_driver_phone: '+689 40 123 456',
-        additional_driver_name: '',
-        additional_driver_firstname: ''
-      };
+      // Tester la connexion API
+      const connectionTest = await brevoApiService.testConnection();
       
-      const testEmailTexts = {
-        subject: 'TEST - Configuration Brevo fonctionnelle ✅',
-        intro: 'Ceci est un email de test pour vérifier la configuration Brevo.',
-        clientId: 'ID Test',
-        name: 'Nom',
-        firstname: 'Prénom',
-        email: 'Email',
-        phone: 'Téléphone',
-        submissionDate: 'Date de test'
-      };
-      
-      const testAttachments = [
-        {
-          filename: 'test_configuration_brevo.txt',
-          content: `Configuration Brevo testée avec succès !
-          
-Date: ${new Date().toLocaleString()}
-Serveur: ${process.env.EMAIL_HOST}
-Port: ${process.env.EMAIL_PORT}
-Utilisateur: ${process.env.EMAIL_USER}
-
-RAIATEA RENT CAR - Système de formulaires`
-        }
-      ];
-      
-      // Générer le contenu HTML de l'email de test
-      const emailHtml = generateEmailTemplate(testClientData, testEmailTexts, testAttachments);
-      
-      // Email de test avec template HTML
-      const mailOptions = {
-        from: process.env.BREVO_VERIFIED_SENDER || process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
-        to: process.env.EMAIL_TO,
-        subject: testEmailTexts.subject,
-        html: emailHtml,
-        text: `Ceci est un email de test pour vérifier la configuration Brevo.
-
-Date: ${new Date().toLocaleString()}
-Serveur: ${process.env.EMAIL_HOST}
-Port: ${process.env.EMAIL_PORT}
-
-Si vous recevez cet email, la configuration Brevo fonctionne parfaitement !
-
-RAIATEA RENT CAR - Système de formulaires`,
-        attachments: testAttachments
-      };
-      
-      console.log('Envoi de l\'email de test...');
-      console.log('De:', mailOptions.from);
-      console.log('À:', mailOptions.to);
-      
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error('ERREUR ENVOI EMAIL TEST:', error);
-          res.status(500).json({ 
-            error: 'Erreur lors de l\'envoi du test', 
-            details: error.message,
-            code: error.code
+      if (connectionTest.success) {
+        console.log('✅ Connexion API Brevo réussie');
+        console.log('Compte:', connectionTest.data.email || 'Non spécifié');
+        
+        // Envoyer l'email de test via API
+        const testResult = await brevoApiService.sendTestEmail();
+        
+        if (testResult.success) {
+          console.log('🎉 TEST API BREVO RÉUSSI');
+          return res.json({
+            success: true,
+            method: 'API Brevo',
+            message: 'Email de test envoyé avec succès via API Brevo',
+            messageId: testResult.messageId,
+            accountInfo: connectionTest.data
           });
         } else {
-          console.log('SUCCÈS ENVOI EMAIL TEST:', info.response);
-          res.json({ 
-            success: true, 
-            message: 'Email de test envoyé avec succès',
-            messageId: info.messageId,
-            response: info.response
-          });
+          console.error('❌ Échec envoi test API Brevo:', testResult.error);
         }
-      });
+      } else {
+        console.error('❌ Échec connexion API Brevo:', connectionTest.error);
+      }
+      
+      console.log('⚠️ API Brevo échouée, passage au test SMTP...');
+    } else {
+      console.log('⚠️ API Brevo non configurée, test SMTP...');
     }
-  });
+    
+    // Fallback SMTP
+    console.log('📧 Test de configuration SMTP...');
+    
+    const transporterConfig = {
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    };
+    
+    const transporter = nodemailer.createTransporter(transporterConfig);
+    
+    // Test de vérification SMTP
+    transporter.verify(function(error, success) {
+      if (error) {
+        console.error('❌ ÉCHEC VÉRIFICATION SMTP:', error);
+        return res.status(500).json({ 
+          success: false,
+          method: 'SMTP',
+          error: 'Échec de vérification SMTP', 
+          details: error.message,
+          code: error.code,
+          suggestions: [
+            'Vérifiez vos variables EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS',
+            'Assurez-vous que EMAIL_USER est votre email de compte Brevo',
+            'Régénérez votre mot de passe SMTP dans Brevo',
+            'Ou configurez BREVO_API_KEY pour utiliser l\'API'
+          ]
+        });
+      } else {
+        console.log('✅ VÉRIFICATION SMTP RÉUSSIE');
+        
+        // Données de test
+        const testClientData = {
+          id: 'TEST-SMTP-' + Date.now(),
+          language: 'fr',
+          main_driver_name: 'TEST',
+          main_driver_firstname: 'SMTP',
+          main_driver_email: process.env.EMAIL_TO,
+          main_driver_phone: '+689 40 123 456',
+          additional_driver_name: '',
+          additional_driver_firstname: ''
+        };
+        
+        const testAttachments = [
+          {
+            filename: 'test_smtp_config.txt',
+            content: `Test SMTP réussi !
+            
+Date: ${new Date().toLocaleString()}
+Serveur: ${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT}
+Utilisateur: ${process.env.EMAIL_USER}
+
+RAIATEA RENT CAR - Test SMTP`
+          }
+        ];
+        
+        // Envoyer via le système de fallback
+        sendEmailWithFallback(testClientData, testAttachments)
+          .then(result => {
+            if (result.success) {
+              console.log('🎉 TEST SMTP RÉUSSI');
+              res.json({
+                success: true,
+                method: result.method || 'SMTP',
+                message: `Email de test envoyé avec succès via ${result.method || 'SMTP'}`,
+                messageId: result.messageId
+              });
+            } else {
+              console.error('❌ ÉCHEC TEST SMTP:', result.error);
+              res.status(500).json({
+                success: false,
+                method: result.method || 'SMTP',
+                error: 'Échec du test SMTP',
+                details: result.error
+              });
+            }
+          })
+          .catch(error => {
+            console.error('❌ EXCEPTION TEST SMTP:', error);
+            res.status(500).json({
+              success: false,
+              method: 'SMTP',
+              error: 'Exception lors du test SMTP',
+              details: error.message
+            });
+          });
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ ERREUR CRITIQUE TEST EMAIL:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur critique lors du test',
+      details: error.message,
+      stack: error.stack
+    });
+  }
 });
 
 // Démarrer le serveur
