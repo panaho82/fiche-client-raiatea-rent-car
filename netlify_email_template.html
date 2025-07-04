@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            background-color: #f4f4f4; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.1); 
+        }
+        .header { 
+            background: #333; 
+            color: white; 
+            padding: 20px; 
+            text-align: center; 
+            margin: -30px -30px 30px -30px; 
+            border-radius: 8px 8px 0 0; 
+        }
+        .section { 
+            margin-bottom: 25px; 
+            padding: 15px; 
+            background: #f8f9fa; 
+            border-left: 4px solid #FFD700; 
+            border-radius: 4px; 
+        }
+        .section h3 { 
+            margin-top: 0; 
+            color: #E6B800; 
+            border-bottom: 2px solid #E6B800; 
+            padding-bottom: 5px; 
+        }
+        .field { 
+            margin-bottom: 10px; 
+            display: flex; 
+        }
+        .field-label { 
+            font-weight: bold; 
+            min-width: 150px; 
+            color: #555; 
+        }
+        .field-value { 
+            flex: 1; 
+        }
+        .attachments { 
+            background: #e9ecef; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin-top: 20px; 
+        }
+        .footer { 
+            text-align: center; 
+            margin-top: 30px; 
+            padding-top: 20px; 
+            border-top: 1px solid #ddd; 
+            color: #666; 
+            font-size: 12px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RAIATEA RENT CAR</h1>
+            <p>NOUVELLE FICHE CLIENT</p>
+        </div>
+
+        <div class="section">
+            <h3>👤 Conducteur Principal</h3>
+            <div class="field">
+                <div class="field-label">Nom :</div>
+                <div class="field-value">{{main_driver_name}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Prénom :</div>
+                <div class="field-value">{{main_driver_firstname}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Email :</div>
+                <div class="field-value">{{main_driver_email}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Téléphone :</div>
+                <div class="field-value">{{main_driver_phone}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Date de naissance :</div>
+                <div class="field-value">{{main_driver_birth_date}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Lieu de naissance :</div>
+                <div class="field-value">{{main_driver_birth_place}}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>📍 Adresse</h3>
+            <div class="field">
+                <div class="field-label">Adresse :</div>
+                <div class="field-value">{{main_driver_address}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Code postal :</div>
+                <div class="field-value">{{main_driver_postal_code}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Ville :</div>
+                <div class="field-value">{{main_driver_city}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Pays :</div>
+                <div class="field-value">{{main_driver_country}}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🪪 Permis de Conduire</h3>
+            <div class="field">
+                <div class="field-label">Numéro :</div>
+                <div class="field-value">{{main_driver_license_number}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Date d'émission :</div>
+                <div class="field-value">{{main_driver_license_issue_date}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Date de validité :</div>
+                <div class="field-value">{{main_driver_license_validity_date}}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>💳 Carte de Crédit</h3>
+            <div class="field">
+                <div class="field-label">Numéro :</div>
+                <div class="field-value">{{main_driver_credit_card}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Expiration :</div>
+                <div class="field-value">{{main_driver_credit_card_expiry}}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>ℹ️ Informations</h3>
+            <div class="field">
+                <div class="field-label">Conducteur additionnel :</div>
+                <div class="field-value">{{has_additional_driver}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Langue :</div>
+                <div class="field-value">{{language}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Date de soumission :</div>
+                <div class="field-value">{{created_at}}</div>
+            </div>
+        </div>
+
+        <div class="attachments">
+            <h3>📎 Pièces Jointes</h3>
+            <p>Les fichiers suivants sont joints à cet email :</p>
+            <ul>
+                <li>📷 Photo permis de conduire (recto)</li>
+                <li>📷 Photo permis de conduire (verso)</li>
+                <li>✍️ Signature manuscrite</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p><strong>RAIATEA RENT CAR</strong><br>
+            RCS: 07238B - NR TAHITI: 834119<br>
+            Aéroport de Raiatea - GSM: +689 87-313262</p>
+        </div>
+    </div>
+</body>
+</html> 

@@ -12,6 +12,177 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Fonction pour générer le template HTML d'email professionnel
+function generateEmailTemplate(clientData, emailTexts, attachments) {
+  const isFrench = clientData.language === 'fr';
+  const hasAdditionalDriver = clientData.additional_driver_name && clientData.additional_driver_name.trim() !== '';
+  
+  // Liste des pièces jointes pour l'affichage
+  let attachmentsList = `
+    <li>Fiche client complète (PDF)</li>
+    <li>Photos du permis de conduire principal</li>
+  `;
+  
+  if (hasAdditionalDriver) {
+    attachmentsList += `<li>Photos du permis conducteur additionnel</li>`;
+  }
+  
+  const template = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAIATEA RENT CAR - Nouvelle fiche client</title>
+</head>
+<body style="margin: 0; padding: 20px; background-color: #f5f5f5; font-family: Arial, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; background-color: white; border-radius: 8px; overflow: hidden;">
+    
+    <!-- Header avec logo -->
+    <div style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); padding: 30px 20px; text-align: center;">
+      <h1 style="color: #000; margin: 0; font-size: 28px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+        🚗 RAIATEA RENT CAR
+      </h1>
+      <p style="color: #333; margin: 8px 0 0 0; font-size: 16px; font-weight: 500;">
+        ${isFrench ? 'Nouvelle fiche client' : 'New client form'}
+      </p>
+    </div>
+    
+    <!-- Contenu principal -->
+    <div style="padding: 30px 25px; background-color: #fafafa;">
+      <h2 style="color: #333; margin: 0 0 20px 0; font-size: 22px; border-bottom: 2px solid #FFD700; padding-bottom: 8px;">
+        👤 ${clientData.main_driver_name} ${clientData.main_driver_firstname}
+      </h2>
+      
+      <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <tr>
+          <td style="padding: 15px 20px; border-bottom: 1px solid #eee; font-weight: bold; color: #555; background-color: #f8f9fa; width: 40%;">
+            📋 ${emailTexts.clientId}
+          </td>
+          <td style="padding: 15px 20px; border-bottom: 1px solid #eee; color: #333; font-family: 'Courier New', monospace; font-weight: bold; color: #007bff;">
+            ${clientData.id}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 15px 20px; border-bottom: 1px solid #eee; font-weight: bold; color: #555; background-color: #f8f9fa;">
+            📧 ${emailTexts.email}
+          </td>
+          <td style="padding: 15px 20px; border-bottom: 1px solid #eee; color: #333;">
+            <a href="mailto:${clientData.main_driver_email}" style="color: #007bff; text-decoration: none;">
+              ${clientData.main_driver_email}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 15px 20px; border-bottom: 1px solid #eee; font-weight: bold; color: #555; background-color: #f8f9fa;">
+            📱 ${emailTexts.phone}
+          </td>
+          <td style="padding: 15px 20px; border-bottom: 1px solid #eee; color: #333;">
+            <a href="tel:${clientData.main_driver_phone}" style="color: #007bff; text-decoration: none;">
+              ${clientData.main_driver_phone}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 15px 20px; border-bottom: 1px solid #eee; font-weight: bold; color: #555; background-color: #f8f9fa;">
+            🗓️ ${emailTexts.submissionDate}
+          </td>
+          <td style="padding: 15px 20px; border-bottom: 1px solid #eee; color: #333;">
+            ${new Date().toLocaleString(isFrench ? 'fr-FR' : 'en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </td>
+        </tr>
+        ${hasAdditionalDriver ? `
+        <tr>
+          <td style="padding: 15px 20px; font-weight: bold; color: #555; background-color: #f8f9fa;">
+            👥 ${isFrench ? 'Conducteur additionnel' : 'Additional driver'}
+          </td>
+          <td style="padding: 15px 20px; color: #333;">
+            ${clientData.additional_driver_name} ${clientData.additional_driver_firstname}
+          </td>
+        </tr>` : ''}
+      </table>
+      
+      <!-- Pièces jointes -->
+      <div style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%); border-radius: 8px; border-left: 4px solid #28a745;">
+        <h3 style="color: #2e7d32; margin: 0 0 15px 0; font-size: 18px; display: flex; align-items: center;">
+          📎 ${isFrench ? 'Pièces jointes incluses' : 'Attached files'} (${attachments.length})
+        </h3>
+        <ul style="margin: 0; padding-left: 20px; color: #333; line-height: 1.6;">
+          ${attachmentsList}
+        </ul>
+        <div style="margin-top: 15px; padding: 12px; background-color: rgba(255,255,255,0.7); border-radius: 4px; font-size: 14px; color: #666;">
+          💡 ${isFrench ? 'Toutes les images sont optimisées et sécurisées' : 'All images are optimized and secure'}
+        </div>
+      </div>
+      
+      <!-- Informations complémentaires -->
+      <div style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-radius: 8px; border-left: 4px solid #ffc107;">
+        <h4 style="color: #856404; margin: 0 0 10px 0; font-size: 16px;">
+          ℹ️ ${isFrench ? 'Informations système' : 'System information'}
+        </h4>
+        <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.5;">
+          ${isFrench 
+            ? 'Cette fiche a été générée automatiquement par le système de réservation en ligne de RAIATEA RENT CAR. Toutes les données sont sécurisées et conformes au RGPD.'
+            : 'This form was automatically generated by RAIATEA RENT CAR online booking system. All data is secure and GDPR compliant.'
+          }
+        </p>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div style="background-color: #333; color: white; padding: 25px 20px; text-align: center;">
+      <div style="margin-bottom: 15px;">
+        <h4 style="margin: 0 0 8px 0; font-size: 18px; color: #FFD700;">
+          🏝️ RAIATEA RENT CAR
+        </h4>
+        <p style="margin: 0; font-size: 14px; color: #ccc;">
+          ${isFrench ? 'Location de véhicules en Polynésie française' : 'Vehicle rental in French Polynesia'}
+        </p>
+      </div>
+      
+      <div style="border-top: 1px solid #555; padding-top: 15px; font-size: 12px; color: #aaa;">
+        <p style="margin: 0 0 5px 0;">
+          🤖 ${isFrench ? 'Email généré automatiquement' : 'Automatically generated email'}
+        </p>
+        <p style="margin: 0;">
+          ${isFrench 
+            ? 'Système de gestion des fiches clients - Version 2.0'
+            : 'Client management system - Version 2.0'
+          }
+        </p>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- Styles pour la compatibilité email -->
+  <style>
+    @media only screen and (max-width: 600px) {
+      .email-container {
+        width: 100% !important;
+        margin: 0 !important;
+      }
+      .email-table {
+        font-size: 14px !important;
+      }
+      .email-header h1 {
+        font-size: 24px !important;
+      }
+    }
+  </style>
+</body>
+</html>`;
+  
+  return template;
+}
+
 // Définir l'environnement (production sur Render, développement en local)
 if (process.env.RENDER) {
   process.env.NODE_ENV = 'production';
@@ -966,12 +1137,16 @@ function insertClientData(clientData, pdfPath) {
         
         console.log('Total des pièces jointes:', attachments.length);
         
+        // Générer le contenu HTML de l'email
+        const emailHtml = generateEmailTemplate(clientData, emailTexts, attachments);
+        
         // Envoi de l'email
         const mailOptions = {
           // Pour Brevo, utiliser l'adresse vérifiée comme expéditeur
           from: process.env.BREVO_VERIFIED_SENDER || process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
           to: process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
           subject: emailTexts.subject,
+          html: emailHtml,
           text: `${emailTexts.intro}
 
 ${emailTexts.clientId}: ${clientData.id}
@@ -1184,11 +1359,23 @@ app.post('/api/resend-email/:id', (req, res) => {
         submissionDate: isFrench ? 'Date de soumission' : 'Submission date'
       };
       
+      // Préparer les pièces jointes
+      const attachments = [
+        {
+          filename: `${client.id}_${client.main_driver_name}_${client.main_driver_firstname}.pdf`,
+          path: pdfPath
+        }
+      ];
+      
+      // Générer le contenu HTML de l'email
+      const emailHtml = generateEmailTemplate(client, emailTexts, attachments);
+      
       // Envoi de l'email
       const mailOptions = {
         from: process.env.BREVO_VERIFIED_SENDER || process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
         to: process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
         subject: emailTexts.subject,
+        html: emailHtml,
         text: `${emailTexts.intro}
 
 ${emailTexts.clientId}: ${client.id}
@@ -1198,12 +1385,7 @@ ${emailTexts.email}: ${client.main_driver_email}
 ${emailTexts.phone}: ${client.main_driver_phone}
 ${emailTexts.submissionDate}: ${new Date(client.submission_date).toLocaleString()}
 `,
-        attachments: [
-          {
-            filename: `${client.id}_${client.main_driver_name}_${client.main_driver_firstname}.pdf`,
-            path: pdfPath
-          }
-        ]
+        attachments: attachments
       };
       
       transporter.sendMail(mailOptions, (error, info) => {
@@ -1263,11 +1445,52 @@ app.get('/test-email', (req, res) => {
     } else {
       console.log('SUCCÈS VÉRIFICATION SMTP - Serveur prêt');
       
-      // Email de test simple
+      // Données de test pour l'email
+      const testClientData = {
+        id: 'TEST-' + Date.now(),
+        language: 'fr',
+        main_driver_name: 'TEST',
+        main_driver_firstname: 'Utilisateur',
+        main_driver_email: process.env.EMAIL_TO,
+        main_driver_phone: '+689 40 123 456',
+        additional_driver_name: '',
+        additional_driver_firstname: ''
+      };
+      
+      const testEmailTexts = {
+        subject: 'TEST - Configuration Brevo fonctionnelle ✅',
+        intro: 'Ceci est un email de test pour vérifier la configuration Brevo.',
+        clientId: 'ID Test',
+        name: 'Nom',
+        firstname: 'Prénom',
+        email: 'Email',
+        phone: 'Téléphone',
+        submissionDate: 'Date de test'
+      };
+      
+      const testAttachments = [
+        {
+          filename: 'test_configuration_brevo.txt',
+          content: `Configuration Brevo testée avec succès !
+          
+Date: ${new Date().toLocaleString()}
+Serveur: ${process.env.EMAIL_HOST}
+Port: ${process.env.EMAIL_PORT}
+Utilisateur: ${process.env.EMAIL_USER}
+
+RAIATEA RENT CAR - Système de formulaires`
+        }
+      ];
+      
+      // Générer le contenu HTML de l'email de test
+      const emailHtml = generateEmailTemplate(testClientData, testEmailTexts, testAttachments);
+      
+      // Email de test avec template HTML
       const mailOptions = {
         from: process.env.BREVO_VERIFIED_SENDER || process.env.EMAIL_TO || 'raiatearentcar@mail.pf',
         to: process.env.EMAIL_TO,
-        subject: 'TEST - Configuration Brevo fonctionnelle',
+        subject: testEmailTexts.subject,
+        html: emailHtml,
         text: `Ceci est un email de test pour vérifier la configuration Brevo.
 
 Date: ${new Date().toLocaleString()}
@@ -1276,7 +1499,8 @@ Port: ${process.env.EMAIL_PORT}
 
 Si vous recevez cet email, la configuration Brevo fonctionne parfaitement !
 
-RAIATEA RENT CAR - Système de formulaires`
+RAIATEA RENT CAR - Système de formulaires`,
+        attachments: testAttachments
       };
       
       console.log('Envoi de l\'email de test...');

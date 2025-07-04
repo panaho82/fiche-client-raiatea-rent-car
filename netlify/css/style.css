@@ -1,0 +1,364 @@
+/* Variables et reset */
+:root {
+    --primary-color: #E6B800; /* Jaune doré plus doux */
+    --secondary-color: #f8f9fa;
+    --accent-color: #6B6B6B; /* Gris plus foncé et moins intense */
+    --text-color: #333;
+    --border-color: #ddd;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: #f5f5f5;
+    padding: 20px;
+}
+
+/* Sélecteur de langue */
+.language-selector {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+}
+
+#language-select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* Conteneur principal */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+/* En-tête */
+header {
+    background-color: #333333; /* Gris sombre pour l'en-tête */
+    color: white;
+    padding: 30px 20px;
+    text-align: center;
+}
+
+.company-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
+}
+
+.logo h1 {
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+.logo p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.form-title {
+    margin-top: 20px;
+    font-size: 22px;
+}
+
+/* Formulaire */
+form {
+    padding: 30px;
+}
+
+.form-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: var(--secondary-color);
+    border-radius: 6px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.form-section h3 {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    font-size: 18px;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.form-group.full-width {
+    flex-basis: 100%;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+input[type="month"],
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.checkbox-row {
+    align-items: center;
+}
+
+.checkbox-row .form-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-row label {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.info-text {
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #f8f8f8;
+    padding: 15px;
+    border-radius: 4px;
+    border-left: 3px solid #ccc;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Pad de signature */
+.signature-container {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+#signature-pad {
+    width: 100%;
+    height: 200px;
+    background-color: white;
+}
+
+.signature-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px;
+    background-color: #f8f9fa;
+}
+
+#clear-signature {
+    background-color: #f8f9fa;
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#clear-signature:hover {
+    background-color: #e9ecef;
+}
+
+/* Upload de permis de conduire */
+.license-upload-section {
+    margin-top: 15px;
+}
+
+.file-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+}
+
+.preview-container {
+    width: 100%;
+    height: 150px;
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: #f8f9fa;
+    position: relative;
+}
+
+.license-preview {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.license-preview.hidden {
+    display: none;
+}
+
+.preview-container::before {
+    content: attr(data-placeholder);
+    color: var(--accent-color);
+    font-size: 14px;
+    position: absolute;
+}
+
+.preview-container.has-image::before {
+    display: none;
+}
+
+/* Boutons */
+.form-actions {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.submit-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+    opacity: 0.9;
+}
+
+/* Message de succès */
+#success-message {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.success-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+}
+
+.success-content i {
+    font-size: 60px;
+    color: var(--success-color);
+    margin-bottom: 20px;
+}
+
+.success-content h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.success-content p {
+    font-size: 16px;
+    color: #666;
+}
+
+/* Gestion des langues */
+.lang-fr, .lang-en {
+    display: none;
+}
+
+body[data-language="fr"] .lang-fr {
+    display: block;
+}
+
+body[data-language="en"] .lang-en {
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-group {
+        flex-basis: 100%;
+    }
+    
+    .language-selector {
+        position: relative;
+        top: 0;
+        right: 0;
+        text-align: right;
+        margin-bottom: 20px;
+    }
+    
+    header {
+        padding: 20px 15px;
+    }
+    
+    .logo h1 {
+        font-size: 24px;
+    }
+    
+    .form-title {
+        font-size: 20px;
+    }
+    
+    form {
+        padding: 20px 15px;
+    }
+} 

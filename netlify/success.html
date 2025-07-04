@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merci - RAIATEA RENT CAR</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>RAIATEA RENT CAR</h1>
+                <p>RCS: 07238B - NR TAHITI: 834119</p>
+                <p>Aéroport de Raiatea</p>
+                <p>GSM: +689 87-313262</p>
+            </div>
+        </header>
+
+        <div class="success-container">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            
+            <h2>Merci !</h2>
+            <h3>Thank you!</h3>
+            
+            <div class="success-message">
+                <p class="lang-fr">
+                    Votre fiche client a été envoyée avec succès.<br>
+                    Nous avons bien reçu vos informations et vous contacterons bientôt.
+                </p>
+                <p class="lang-en">
+                    Your client form has been sent successfully.<br>
+                    We have received your information and will contact you soon.
+                </p>
+            </div>
+            
+            <div class="next-steps">
+                <h4 class="lang-fr">Prochaines étapes :</h4>
+                <h4 class="lang-en">Next steps:</h4>
+                
+                <ul class="lang-fr">
+                    <li>Vérification de votre dossier (24h)</li>
+                    <li>Confirmation de votre réservation</li>
+                    <li>Instructions pour le retrait du véhicule</li>
+                </ul>
+                
+                <ul class="lang-en">
+                    <li>Document verification (24h)</li>
+                    <li>Booking confirmation</li>
+                    <li>Vehicle pickup instructions</li>
+                </ul>
+            </div>
+            
+            <div class="contact-info">
+                <h4 class="lang-fr">Besoin d'aide ?</h4>
+                <h4 class="lang-en">Need help?</h4>
+                
+                <p>
+                    <i class="fas fa-phone"></i> +689 87-313262<br>
+                    <i class="fas fa-envelope"></i> raiatearentcar@mail.pf
+                </p>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="/" class="btn btn-primary">
+                    <span class="lang-fr">Retour au formulaire</span>
+                    <span class="lang-en">Back to form</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .success-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 30px;
+        }
+
+        .success-container h2 {
+            color: #28a745;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .success-container h3 {
+            color: #6c757d;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            font-weight: normal;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .success-message p {
+            color: #155724;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .next-steps {
+            margin-bottom: 30px;
+            text-align: left;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .next-steps h4 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .next-steps ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .next-steps li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .next-steps li:before {
+            content: '✓';
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .contact-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .contact-info h4 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .contact-info p {
+            color: #666;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .contact-info i {
+            color: #007bff;
+            margin-right: 8px;
+        }
+
+        .action-buttons {
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #FFD700;
+            color: #333;
+        }
+
+        .btn-primary:hover {
+            background-color: #E6C200;
+            transform: translateY(-2px);
+        }
+
+        /* Gestion des langues */
+        .lang-en {
+            display: none;
+        }
+
+        [data-language="en"] .lang-fr {
+            display: none;
+        }
+
+        [data-language="en"] .lang-en {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .success-container {
+                padding: 20px 10px;
+            }
+            
+            .success-icon {
+                font-size: 3rem;
+            }
+            
+            .success-container h2 {
+                font-size: 2rem;
+            }
+            
+            .success-container h3 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+
+    <script>
+        // Détection de la langue depuis l'URL ou stockage local
+        const urlParams = new URLSearchParams(window.location.search);
+        const language = urlParams.get('lang') || localStorage.getItem('language') || 'fr';
+        
+        document.body.setAttribute('data-language', language);
+        
+        // Sauvegarder la langue
+        localStorage.setItem('language', language);
+    </script>
+</body>
+</html> 

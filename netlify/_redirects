@@ -1,0 +1,27 @@
+# Redirections pour RAIATEA RENT CAR
+
+# Redirection de l'ancienne URL vers la nouvelle
+/form    /index.html   200
+/client  /index.html   200
+
+# Page admin (si nécessaire)
+/admin   /admin.html   200
+
+# Page de succès après soumission
+/success /success.html 200
+/merci   /success.html 200
+
+# Redirection pour les langues
+/en      /index.html?lang=en   200
+/fr      /index.html?lang=fr   200
+
+# Gestion des erreurs 404
+/*       /index.html   404
+
+# Headers de sécurité
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: default-src 'self' https: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:; font-src 'self' data: https:; 

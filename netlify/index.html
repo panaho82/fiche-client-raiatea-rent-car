@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAIATEA RENT CAR - Fiche Client</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="language-selector">
+        <select id="language-select">
+            <option value="fr" selected>Français</option>
+            <option value="en">English</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>RAIATEA RENT CAR</h1>
+                <p>RCS: 07238B - NR TAHITI: 834119</p>
+                <p class="lang-fr">Aéroport de Raiatea</p>
+                <p class="lang-en">Raiatea Airport</p>
+                <p>GSM: +689 87-313262</p>
+            </div>
+            <h2 class="form-title lang-fr">FICHE DE RENSEIGNEMENT CLIENT</h2>
+            <h2 class="form-title lang-en">CLIENT INFORMATION FORM</h2>
+        </header>
+
+        <!-- NETLIFY FORM - Configuration automatique -->
+        <form name="client-form" method="POST" data-netlify="true" data-netlify-recaptcha="true" enctype="multipart/form-data">
+            <!-- Champs cachés pour Netlify -->
+            <input type="hidden" name="form-name" value="client-form" />
+            <input type="hidden" id="language" name="language" value="fr">
+            <input type="hidden" id="submission-date" name="submission_date">
+
+            <!-- Section Conducteur Principal -->
+            <section class="form-section">
+                <h3 class="lang-fr">Conducteur Principal</h3>
+                <h3 class="lang-en">Main Driver</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-name" class="lang-fr">Nom *</label>
+                        <label for="main-driver-name" class="lang-en">Name *</label>
+                        <input type="text" id="main-driver-name" name="main_driver_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-firstname" class="lang-fr">Prénoms *</label>
+                        <label for="main-driver-firstname" class="lang-en">Firstname(s) *</label>
+                        <input type="text" id="main-driver-firstname" name="main_driver_firstname" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="main-driver-address" class="lang-fr">Adresse (rue) *</label>
+                        <label for="main-driver-address" class="lang-en">Address (street) *</label>
+                        <input type="text" id="main-driver-address" name="main_driver_address" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-postal-code" class="lang-fr">Code postal *</label>
+                        <label for="main-driver-postal-code" class="lang-en">Postal code *</label>
+                        <input type="text" id="main-driver-postal-code" name="main_driver_postal_code" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-city" class="lang-fr">Ville *</label>
+                        <label for="main-driver-city" class="lang-en">City *</label>
+                        <input type="text" id="main-driver-city" name="main_driver_city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-country" class="lang-fr">Pays *</label>
+                        <label for="main-driver-country" class="lang-en">Country *</label>
+                        <input type="text" id="main-driver-country" name="main_driver_country" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-birth-date" class="lang-fr">Date de naissance *</label>
+                        <label for="main-driver-birth-date" class="lang-en">Birth date *</label>
+                        <input type="date" id="main-driver-birth-date" name="main_driver_birth_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-birth-place" class="lang-fr">Lieu de naissance *</label>
+                        <label for="main-driver-birth-place" class="lang-en">Birth place *</label>
+                        <input type="text" id="main-driver-birth-place" name="main_driver_birth_place" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-phone" class="lang-fr">Téléphone *</label>
+                        <label for="main-driver-phone" class="lang-en">Phone *</label>
+                        <input type="tel" id="main-driver-phone" name="main_driver_phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-email" class="lang-fr">Email *</label>
+                        <label for="main-driver-email" class="lang-en">Email *</label>
+                        <input type="email" id="main-driver-email" name="main_driver_email" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-license-number" class="lang-fr">N° du permis de conduire *</label>
+                        <label for="main-driver-license-number" class="lang-en">Driver's license number *</label>
+                        <input type="text" id="main-driver-license-number" name="main_driver_license_number" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-license-issue-date" class="lang-fr">Date d'émission du permis *</label>
+                        <label for="main-driver-license-issue-date" class="lang-en">Issue date *</label>
+                        <input type="date" id="main-driver-license-issue-date" name="main_driver_license_issue_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-license-validity-date" class="lang-fr">Date de validité du permis *</label>
+                        <label for="main-driver-license-validity-date" class="lang-en">Validity date *</label>
+                        <input type="date" id="main-driver-license-validity-date" name="main_driver_license_validity_date" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-license-front" class="lang-fr">Photo du permis (recto) *</label>
+                        <label for="main-driver-license-front" class="lang-en">Driver's license photo (front) *</label>
+                        <input type="file" id="main-driver-license-front" name="main_driver_license_front" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-license-back" class="lang-fr">Photo du permis (verso) *</label>
+                        <label for="main-driver-license-back" class="lang-en">Driver's license photo (back) *</label>
+                        <input type="file" id="main-driver-license-back" name="main_driver_license_back" accept="image/*" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Carte de Crédit -->
+            <section class="form-section">
+                <h3 class="lang-fr">Carte de Crédit</h3>
+                <h3 class="lang-en">Credit Card</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="main-driver-credit-card" class="lang-fr">Numéro de carte de crédit *</label>
+                        <label for="main-driver-credit-card" class="lang-en">Credit card number *</label>
+                        <input type="text" id="main-driver-credit-card" name="main_driver_credit_card" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="main-driver-credit-card-expiry" class="lang-fr">Date d'expiration *</label>
+                        <label for="main-driver-credit-card-expiry" class="lang-en">Expiration date *</label>
+                        <input type="month" id="main-driver-credit-card-expiry" name="main_driver_credit_card_expiry" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Conducteur Additionnel -->
+            <section class="form-section">
+                <div class="form-row checkbox-row">
+                    <div class="form-group">
+                        <input type="checkbox" id="has-additional-driver" name="has_additional_driver" value="yes">
+                        <label for="has-additional-driver" class="lang-fr">Conducteur Additionnel</label>
+                        <label for="has-additional-driver" class="lang-en">Additional Driver</label>
+                    </div>
+                </div>
+
+                <div id="additional-driver-section" class="hidden">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="additional-driver-name" class="lang-fr">Nom</label>
+                            <label for="additional-driver-name" class="lang-en">Name</label>
+                            <input type="text" id="additional-driver-name" name="additional_driver_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="additional-driver-firstname" class="lang-fr">Prénoms</label>
+                            <label for="additional-driver-firstname" class="lang-en">Firstname(s)</label>
+                            <input type="text" id="additional-driver-firstname" name="additional_driver_firstname">
+                        </div>
+                    </div>
+                    <!-- Autres champs du conducteur additionnel... -->
+                </div>
+            </section>
+
+            <!-- Section Conditions -->
+            <section class="form-section">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="accept-conditions" name="accept_conditions" value="yes" required>
+                    <label for="accept-conditions" class="lang-fr">
+                        J'accepte les conditions de location et le traitement de mes données personnelles *
+                    </label>
+                    <label for="accept-conditions" class="lang-en">
+                        I accept the rental conditions and the processing of my personal data *
+                    </label>
+                </div>
+            </section>
+
+            <!-- Section Signature -->
+            <section class="form-section">
+                <h3 class="lang-fr">Signature</h3>
+                <h3 class="lang-en">Signature</h3>
+                
+                <div class="signature-section">
+                    <canvas id="signature-pad" width="400" height="200"></canvas>
+                    <button type="button" id="clear-signature" class="lang-fr">Effacer</button>
+                    <button type="button" id="clear-signature" class="lang-en">Clear</button>
+                    <input type="hidden" id="signature-data" name="signature_data">
+                </div>
+            </section>
+
+            <!-- Netlify reCAPTCHA -->
+            <div data-netlify-recaptcha="true"></div>
+
+            <!-- Bouton de soumission -->
+            <div class="submit-section">
+                <button type="submit" class="submit-btn">
+                    <span class="lang-fr">Envoyer la fiche</span>
+                    <span class="lang-en">Submit form</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Message de succès -->
+        <div id="success-message" class="hidden success-message">
+            <h3 class="lang-fr">Merci !</h3>
+            <h3 class="lang-en">Thank you!</h3>
+            <p class="lang-fr">Votre fiche client a été envoyée avec succès.</p>
+            <p class="lang-en">Your client form has been sent successfully.</p>
+        </div>
+    </div>
+
+    <script src="js/signature_pad.min.js"></script>
+    <script src="js/netlify-script.js"></script>
+</body>
+</html> 
