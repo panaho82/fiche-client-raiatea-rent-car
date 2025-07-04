@@ -1228,22 +1228,22 @@ function insertClientData(clientData, pdfPath) {
       console.log('Total des pièces jointes:', attachments.length);
       
       // Envoyer l'email via API Brevo ou SMTP fallback
-      try {
-        const emailResult = await sendEmailWithFallback(clientData, attachments);
-        
-        if (emailResult.success) {
-          console.log(`✅ EMAIL ENVOYÉ AVEC SUCCÈS VIA ${emailResult.method || 'API BREVO'}`);
-          console.log('Message ID:', emailResult.messageId);
-        } else {
-          console.error(`❌ ÉCHEC ENVOI EMAIL VIA ${emailResult.method || 'TOUS LES MOYENS'}`);
-          console.error('Erreur:', emailResult.error);
-        }
-      } catch (emailError) {
-        console.error('=== ERREUR CRITIQUE EMAIL ===');
-        console.error('Erreur lors de l\'envoi de l\'email:', emailError);
-        console.error('Stack trace:', emailError.stack);
-        console.error('=== FIN ERREUR CRITIQUE ===');
-      }
+      sendEmailWithFallback(clientData, attachments)
+        .then(emailResult => {
+          if (emailResult.success) {
+            console.log(`✅ EMAIL ENVOYÉ AVEC SUCCÈS VIA ${emailResult.method || 'API BREVO'}`);
+            console.log('Message ID:', emailResult.messageId);
+          } else {
+            console.error(`❌ ÉCHEC ENVOI EMAIL VIA ${emailResult.method || 'TOUS LES MOYENS'}`);
+            console.error('Erreur:', emailResult.error);
+          }
+        })
+        .catch(emailError => {
+          console.error('=== ERREUR CRITIQUE EMAIL ===');
+          console.error('Erreur lors de l\'envoi de l\'email:', emailError);
+          console.error('Stack trace:', emailError.stack);
+          console.error('=== FIN ERREUR CRITIQUE ===');
+        });
     }
   });
 }
