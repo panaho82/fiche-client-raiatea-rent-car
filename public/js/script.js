@@ -37,11 +37,30 @@ document.addEventListener('DOMContentLoaded', function() {
     form.style.display = 'block';
     
     // Initialisation du pad de signature
+    // Fix décalage sur écrans haute densité (scale selon devicePixelRatio)
+    function resizeSignatureCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const width = signaturePadCanvas.offsetWidth || 600;
+        const height = signaturePadCanvas.offsetHeight || 200;
+        signaturePadCanvas.width = width * ratio;
+        signaturePadCanvas.height = height * ratio;
+        signaturePadCanvas.getContext('2d').scale(ratio, ratio);
+    }
+
+    resizeSignatureCanvas();
+
     const signaturePad = new SignaturePad(signaturePadCanvas, {
         backgroundColor: 'rgb(255, 255, 255)',
         penColor: 'rgb(0, 0, 0)',
         minWidth: 1,
         maxWidth: 2.5
+    });
+
+    window.addEventListener('resize', () => {
+        const data = signaturePad.isEmpty() ? null : signaturePad.toData();
+        resizeSignatureCanvas();
+        signaturePad.clear();
+        if (data) signaturePad.fromData(data);
     });
     
     // Réinitialiser le pad de signature (gérer FR/EN)

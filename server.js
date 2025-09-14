@@ -19,6 +19,54 @@ const port = process.env.PORT || 3000;
 // Derrière un proxy (Render), activer trust proxy pour X-Forwarded-For
 app.set('trust proxy', 1);
 
+// ==========================
+// Utilitaires carte bancaire
+// ==========================
+const ALLOW_FULL_CARD = process.env.ALLOW_FULL_CARD === 'true';
+const ALLOWED_CARD_BRANDS = (process.env.ALLOWED_CARD_BRANDS || 'visa,mastercard')
+  .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+
+function luhnCheck(pan) {
+  if (!pan) return false;
+  const digits = pan.replace(/\D/g, '');
+  let sum = 0;
+  let shouldDouble = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let d = parseInt(digits[i], 10);
+    if (shouldDouble) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+    shouldDouble = !shouldDouble;
+  }
+  return sum % 10 === 0;
+}
+
+function detectBrand(pan) {
+  if (!pan) return 'unknown';
+  const digits = pan.replace(/\D/g, '');
+  if (/^4[0-9]{12}(?:[0-9]{3})?$/.test(digits)) return 'visa';
+  if (/^(5[1-5][0-9]{14})$/.test(digits)) return 'mastercard';
+  if (/^(2221|222[2-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[0-1][0-9]|2720)[0-9]{12}$/.test(digits)) return 'mastercard';
+  if (/^3[47][0-9]{13}$/.test(digits)) return 'amex';
+  return 'unknown';
+}
+
+function isExpired(yyyyMm) {
+  if (!yyyyMm) return true;
+  // yyyy-mm ou yyyy-mm-dd
+  const m = /^([0-9]{4})-([0-9]{2})/.exec(String(yyyyMm));
+  if (!m) return true;
+  const y = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  if (mo < 1 || mo > 12) return true;
+  const endOfMonth = new Date(y, mo, 0);
+  const now = new Date();
+  // carte valide jusqu'à fin du mois
+  return endOfMonth < new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
 // Envoi email via Resend (API HTTP)
 async function sendEmailViaResend(clientData, attachments = []) {
   try {
@@ -165,8 +213,24 @@ async function sendEmailViaSMTP(clientData, attachments = []) {
         submissionDate: isFrench ? 'Date de soumission' : 'Submission date'
       };
       
+      // Préparer les données d'affichage (masquage conditionnel pour l'email)
+      const shouldMaskInEmail = process.env.SEND_FULL_CARD_IN_EMAIL !== 'true';
+      const displayData = { ...clientData };
+      const mask = (v) => {
+        if (!v || typeof v !== 'string') return v;
+        const digits = v.replace(/\D/g, '');
+        const last4 = digits.slice(-4);
+        return `**** **** **** ${last4}`.trim();
+      };
+      if (shouldMaskInEmail) {
+        if (displayData.main_driver_credit_card) displayData.main_driver_credit_card = mask(displayData.main_driver_credit_card);
+        if (displayData.main_card_number) displayData.main_card_number = mask(displayData.main_card_number);
+        if (displayData.additional_credit_card) displayData.additional_credit_card = mask(displayData.additional_credit_card);
+        if (displayData.additional_card_number) displayData.additional_card_number = mask(displayData.additional_card_number);
+      }
+
       // Générer le contenu HTML de l'email
-      const emailHtml = generateEmailTemplate(clientData, emailTexts, attachments);
+      const emailHtml = generateEmailTemplate(displayData, emailTexts, attachments);
       
       // Envoi de l'email
       const mailOptions = {
@@ -176,11 +240,11 @@ async function sendEmailViaSMTP(clientData, attachments = []) {
         html: emailHtml,
         text: `${emailTexts.intro}
 
-${emailTexts.clientId}: ${clientData.id}
-${emailTexts.name}: ${clientData.main_driver_name}
-${emailTexts.firstname}: ${clientData.main_driver_firstname}
-${emailTexts.email}: ${clientData.main_driver_email}
-${emailTexts.phone}: ${clientData.main_driver_phone}
+${emailTexts.clientId}: ${displayData.id}
+${emailTexts.name}: ${displayData.main_driver_name}
+${emailTexts.firstname}: ${displayData.main_driver_firstname}
+${emailTexts.email}: ${displayData.main_driver_email}
+${emailTexts.phone}: ${displayData.main_driver_phone}
 ${emailTexts.submissionDate}: ${new Date().toLocaleString()}
 
 Les photos des permis de conduire sont jointes à cet email.
@@ -1180,7 +1244,7 @@ app.post('/api/submit', async (req, res) => {
       clientData.additional_driver_license_back_data = optimizeBase64Image(clientData.additional_driver_license_back_data);
     }
     
-    // Masquer les numéros de carte avant toute persistance/génération
+    // Validation/stockage des cartes
     const maskCardNumber = (value) => {
       if (!value || typeof value !== 'string') return value;
       const digits = value.replace(/\D/g, '');
@@ -1188,20 +1252,33 @@ app.post('/api/submit', async (req, res) => {
       const last4 = digits.slice(-4);
       return `**** **** **** ${last4}`.trim();
     };
-    // Carte principale (nouveau et ancien champ)
-    if (clientData.main_driver_credit_card) {
-      clientData.main_driver_credit_card = maskCardNumber(clientData.main_driver_credit_card);
-    }
-    if (clientData.main_card_number) {
-      clientData.main_card_number = maskCardNumber(clientData.main_card_number);
-    }
-    // Carte supplémentaire (nouveau et ancien champ)
-    if (clientData.additional_credit_card) {
-      clientData.additional_credit_card = maskCardNumber(clientData.additional_credit_card);
-    }
-    if (clientData.additional_card_number) {
-      clientData.additional_card_number = maskCardNumber(clientData.additional_card_number);
-    }
+    const normalizePan = (v) => (typeof v === 'string' ? v.replace(/\s|-/g, '') : v);
+    const checkAndAssign = (panField, expiryField) => {
+      if (!clientData[panField]) return;
+      const rawPan = String(clientData[panField]);
+      const pan = normalizePan(rawPan);
+      const brand = detectBrand(pan);
+      const luhnOk = luhnCheck(pan);
+      const expired = isExpired(clientData[expiryField]);
+      if (!ALLOWED_CARD_BRANDS.includes(brand)) {
+        console.error('Marque non autorisée:', brand);
+      }
+      if (!luhnOk) {
+        console.error('PAN invalide (Luhn):', panField);
+      }
+      if (expired) {
+        console.error('Carte expirée:', expiryField, clientData[expiryField]);
+      }
+      clientData[`${panField}_brand`] = brand;
+      clientData[`${panField}_luhn_valid`] = luhnOk ? 'true' : 'false';
+      clientData[`${panField}_expired`] = expired ? 'true' : 'false';
+      clientData[panField] = ALLOW_FULL_CARD ? pan : maskCardNumber(pan);
+    };
+
+    checkAndAssign('main_driver_credit_card', 'main_driver_credit_card_expiry');
+    checkAndAssign('main_card_number', 'main_card_expiry_date');
+    checkAndAssign('additional_credit_card', 'additional_credit_card_expiry');
+    checkAndAssign('additional_card_number', 'additional_card_expiry_date');
 
     // Générer le PDF
     console.log('Génération du PDF...');
