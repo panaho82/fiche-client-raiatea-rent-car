@@ -10,43 +10,15 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
-const BrevoApiService = require('./brevo_api_service');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Initialiser le service API Brevo
-const brevoApiService = new BrevoApiService();
+// Mode envoi email: SMTP uniquement (Hostinger)
 
-// Fonction pour envoyer un email (API Brevo en priorité, SMTP en fallback)
+// Fonction pour envoyer un email (SMTP Hostinger)
 async function sendEmailWithFallback(clientData, attachments = []) {
-  console.log('=== DÉBUT ENVOI EMAIL ===');
-  
-  // Essayer l'API Brevo en premier
-  if (brevoApiService.isConfigured()) {
-    console.log('📧 Tentative d\'envoi via API Brevo...');
-    
-    try {
-      const result = await brevoApiService.sendEmail(clientData, attachments);
-      
-      if (result.success) {
-        console.log('✅ EMAIL ENVOYÉ AVEC SUCCÈS VIA API BREVO');
-        console.log('Message ID:', result.messageId);
-        return result;
-      } else {
-        console.error('❌ Échec API Brevo, passage au SMTP...');
-        console.error('Erreur:', result.error);
-      }
-    } catch (error) {
-      console.error('❌ Exception API Brevo, passage au SMTP...');
-      console.error('Erreur:', error.message);
-    }
-  } else {
-    console.log('⚠️ API Brevo non configurée (BREVO_API_KEY manquante), utilisation SMTP...');
-  }
-  
-  // Fallback vers SMTP
-  console.log('📧 Tentative d\'envoi via SMTP...');
+  console.log('=== DÉBUT ENVOI EMAIL (SMTP) ===');
   return await sendEmailViaSMTP(clientData, attachments);
 }
 
@@ -1518,54 +1490,14 @@ ${emailTexts.submissionDate}: ${new Date(client.submission_date).toLocaleString(
 
 // Route de test pour l'envoi d'email (API Brevo + SMTP fallback)
 app.get('/test-email', async (req, res) => {
-  console.log('=== TEST EMAIL DEMANDÉ ===');
-  console.log('BREVO_API_KEY:', process.env.BREVO_API_KEY ? 'Définie (' + process.env.BREVO_API_KEY.substring(0, 10) + '...)' : 'Non définie');
+  console.log('=== TEST EMAIL (SMTP) DEMANDÉ ===');
   console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
   console.log('EMAIL_PORT:', process.env.EMAIL_PORT);
   console.log('EMAIL_USER:', process.env.EMAIL_USER);
   console.log('EMAIL_TO:', process.env.EMAIL_TO);
-  console.log('BREVO_VERIFIED_SENDER:', process.env.BREVO_VERIFIED_SENDER);
   console.log('Mot de passe SMTP défini:', process.env.EMAIL_PASS ? 'OUI' : 'NON');
-  
+
   try {
-    // Essayer d'abord avec l'API Brevo
-    if (brevoApiService.isConfigured()) {
-      console.log('🚀 Test via API Brevo...');
-      
-      // Tester la connexion API
-      const connectionTest = await brevoApiService.testConnection();
-      
-      if (connectionTest.success) {
-        console.log('✅ Connexion API Brevo réussie');
-        console.log('Compte:', connectionTest.data.email || 'Non spécifié');
-        
-        // Envoyer l'email de test via API
-        const testResult = await brevoApiService.sendTestEmail();
-        
-        if (testResult.success) {
-          console.log('🎉 TEST API BREVO RÉUSSI');
-          return res.json({
-            success: true,
-            method: 'API Brevo',
-            message: 'Email de test envoyé avec succès via API Brevo',
-            messageId: testResult.messageId,
-            accountInfo: connectionTest.data
-          });
-        } else {
-          console.error('❌ Échec envoi test API Brevo:', testResult.error);
-        }
-      } else {
-        console.error('❌ Échec connexion API Brevo:', connectionTest.error);
-      }
-      
-      console.log('⚠️ API Brevo échouée, passage au test SMTP...');
-    } else {
-      console.log('⚠️ API Brevo non configurée, test SMTP...');
-    }
-    
-    // Fallback SMTP
-    console.log('📧 Test de configuration SMTP...');
-    
     const transporterConfig = {
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
@@ -1578,95 +1510,35 @@ app.get('/test-email', async (req, res) => {
         rejectUnauthorized: false
       }
     };
-    
-    const transporter = nodemailer.createTransport(transporterConfig);
-    
-    // Test de vérification SMTP
-    transporter.verify(function(error, success) {
-      if (error) {
-        console.error('❌ ÉCHEC VÉRIFICATION SMTP:', error);
-        return res.status(500).json({ 
-          success: false,
-          method: 'SMTP',
-          error: 'Échec de vérification SMTP', 
-          details: error.message,
-          code: error.code,
-          suggestions: [
-            'Vérifiez vos variables EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS',
-            'Assurez-vous que EMAIL_USER est votre email de compte Brevo',
-            'Régénérez votre mot de passe SMTP dans Brevo',
-            'Ou configurez BREVO_API_KEY pour utiliser l\'API'
-          ]
-        });
-      } else {
-        console.log('✅ VÉRIFICATION SMTP RÉUSSIE');
-        
-        // Données de test
-        const testClientData = {
-          id: 'TEST-SMTP-' + Date.now(),
-          language: 'fr',
-          main_driver_name: 'TEST',
-          main_driver_firstname: 'SMTP',
-          main_driver_email: process.env.EMAIL_TO,
-          main_driver_phone: '+689 40 123 456',
-          additional_driver_name: '',
-          additional_driver_firstname: ''
-        };
-        
-        const testAttachments = [
-          {
-            filename: 'test_smtp_config.txt',
-            content: `Test SMTP réussi !
-            
-Date: ${new Date().toLocaleString()}
-Serveur: ${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT}
-Utilisateur: ${process.env.EMAIL_USER}
 
-RAIATEA RENT CAR - Test SMTP`
-          }
-        ];
-        
-        // Envoyer via le système de fallback
-        sendEmailWithFallback(testClientData, testAttachments)
-          .then(result => {
-            if (result.success) {
-              console.log('🎉 TEST SMTP RÉUSSI');
-              res.json({
-                success: true,
-                method: result.method || 'SMTP',
-                message: `Email de test envoyé avec succès via ${result.method || 'SMTP'}`,
-                messageId: result.messageId
-              });
-            } else {
-              console.error('❌ ÉCHEC TEST SMTP:', result.error);
-              res.status(500).json({
-                success: false,
-                method: result.method || 'SMTP',
-                error: 'Échec du test SMTP',
-                details: result.error
-              });
-            }
-          })
-          .catch(error => {
-            console.error('❌ EXCEPTION TEST SMTP:', error);
-            res.status(500).json({
-              success: false,
-              method: 'SMTP',
-              error: 'Exception lors du test SMTP',
-              details: error.message
-            });
-          });
+    const transporter = nodemailer.createTransport(transporterConfig);
+    await transporter.verify();
+    console.log('✅ VÉRIFICATION SMTP RÉUSSIE');
+
+    const testClientData = {
+      id: 'TEST-SMTP-' + Date.now(),
+      language: 'fr',
+      main_driver_name: 'TEST',
+      main_driver_firstname: 'SMTP',
+      main_driver_email: process.env.EMAIL_TO,
+      main_driver_phone: '+689 40 123 456'
+    };
+
+    const testAttachments = [
+      {
+        filename: 'test_smtp_config.txt',
+        content: `Test SMTP réussi !\n\nDate: ${new Date().toLocaleString()}\nServeur: ${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT}\nUtilisateur: ${process.env.EMAIL_USER}\n\nRAIATEA RENT CAR - Test SMTP`
       }
-    });
-    
+    ];
+
+    const result = await sendEmailWithFallback(testClientData, testAttachments);
+    if (result.success) {
+      return res.json({ success: true, method: 'SMTP', messageId: result.messageId });
+    }
+    return res.status(500).json({ success: false, method: 'SMTP', error: result.error || 'Échec envoi' });
   } catch (error) {
-    console.error('❌ ERREUR CRITIQUE TEST EMAIL:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erreur critique lors du test',
-      details: error.message,
-      stack: error.stack
-    });
+    console.error('❌ ERREUR TEST SMTP:', error);
+    res.status(500).json({ success: false, method: 'SMTP', error: error.message });
   }
 });
 
