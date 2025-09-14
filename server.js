@@ -1567,6 +1567,8 @@ ${emailTexts.submissionDate}: ${new Date(client.submission_date).toLocaleString(
 // Route de test pour l'envoi d'email (API Brevo + SMTP fallback)
 app.get('/test-email', async (req, res) => {
   console.log('=== TEST EMAIL DEMANDÉ ===');
+  const hasResend = !!process.env.RESEND_API_KEY;
+  console.log('RESEND_API_KEY défini:', hasResend ? 'OUI' : 'NON');
   console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
   console.log('EMAIL_PORT:', process.env.EMAIL_PORT);
   console.log('EMAIL_USER:', process.env.EMAIL_USER);
@@ -1574,6 +1576,34 @@ app.get('/test-email', async (req, res) => {
   console.log('Mot de passe SMTP défini:', process.env.EMAIL_PASS ? 'OUI' : 'NON');
 
   try {
+    const testClientData = {
+      id: (hasResend ? 'TEST-RESEND-' : 'TEST-SMTP-') + Date.now(),
+      language: 'fr',
+      main_driver_name: hasResend ? 'TEST' : 'TEST',
+      main_driver_firstname: hasResend ? 'RESEND' : 'SMTP',
+      main_driver_email: process.env.EMAIL_TO,
+      main_driver_phone: '+689 40 123 456'
+    };
+
+    const testAttachments = [
+      {
+        filename: hasResend ? 'test_resend_config.txt' : 'test_smtp_config.txt',
+        content: (hasResend
+          ? `Test Resend réussi !\n\nDate: ${new Date().toLocaleString()}\nDestinataire: ${process.env.EMAIL_TO}`
+          : `Test SMTP réussi !\n\nDate: ${new Date().toLocaleString()}\nServeur: ${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT}\nUtilisateur: ${process.env.EMAIL_USER}`)
+      }
+    ];
+
+    // Si Resend est configuré, tester directement Resend sans vérifier SMTP
+    if (hasResend) {
+      const result = await sendEmailViaResend(testClientData, testAttachments);
+      if (result.success) {
+        return res.json({ success: true, method: 'RESEND', messageId: result.messageId });
+      }
+      return res.status(500).json({ success: false, method: 'RESEND', error: result.error || 'Échec envoi Resend' });
+    }
+
+    // Sinon, tester SMTP
     const testPort = Number(process.env.EMAIL_PORT) || 587;
     const testSecure = testPort === 465;
     const transporterConfig = {
@@ -1584,9 +1614,7 @@ app.get('/test-email', async (req, res) => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       },
-      tls: {
-        rejectUnauthorized: false
-      },
+      tls: { rejectUnauthorized: false },
       connectionTimeout: Number(process.env.EMAIL_TIMEOUT) || 60000,
       greetingTimeout: 30000,
       socketTimeout: Number(process.env.EMAIL_TIMEOUT) || 60000
@@ -1596,30 +1624,14 @@ app.get('/test-email', async (req, res) => {
     await transporter.verify();
     console.log('✅ VÉRIFICATION SMTP RÉUSSIE');
 
-    const testClientData = {
-      id: 'TEST-SMTP-' + Date.now(),
-      language: 'fr',
-      main_driver_name: 'TEST',
-      main_driver_firstname: 'SMTP',
-      main_driver_email: process.env.EMAIL_TO,
-      main_driver_phone: '+689 40 123 456'
-    };
-
-    const testAttachments = [
-      {
-        filename: 'test_smtp_config.txt',
-        content: `Test SMTP réussi !\n\nDate: ${new Date().toLocaleString()}\nServeur: ${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT}\nUtilisateur: ${process.env.EMAIL_USER}\n\nRAIATEA RENT CAR - Test SMTP`
-      }
-    ];
-
-    const result = await sendEmailWithFallback(testClientData, testAttachments);
+    const result = await sendEmailViaSMTP(testClientData, testAttachments);
     if (result.success) {
-      return res.json({ success: true, method: result.method || 'SMTP', messageId: result.messageId });
+      return res.json({ success: true, method: 'SMTP', messageId: result.messageId });
     }
-    return res.status(500).json({ success: false, method: result.method || 'SMTP', error: result.error || 'Échec envoi' });
+    return res.status(500).json({ success: false, method: 'SMTP', error: result.error || 'Échec envoi SMTP' });
   } catch (error) {
-    console.error('❌ ERREUR TEST SMTP:', error);
-    res.status(500).json({ success: false, method: 'SMTP', error: error.message });
+    console.error('❌ ERREUR TEST EMAIL:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
