@@ -15,6 +15,8 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Mode envoi email: SMTP uniquement (Hostinger)
+// Derrière un proxy (Render), activer trust proxy pour X-Forwarded-For
+app.set('trust proxy', 1);
 
 // Fonction pour envoyer un email (SMTP Hostinger)
 async function sendEmailWithFallback(clientData, attachments = []) {
