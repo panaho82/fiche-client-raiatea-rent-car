@@ -10,6 +10,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,9 +19,80 @@ const port = process.env.PORT || 3000;
 // Derrière un proxy (Render), activer trust proxy pour X-Forwarded-For
 app.set('trust proxy', 1);
 
-// Fonction pour envoyer un email (SMTP Hostinger)
+// Envoi email via Resend (API HTTP)
+async function sendEmailViaResend(clientData, attachments = []) {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      return { success: false, error: 'RESEND_API_KEY manquant', method: 'RESEND' };
+    }
+
+    const isFrench = clientData.language === 'fr';
+    const emailTexts = {
+      subject: isFrench
+        ? `Nouvelle fiche client - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})`
+        : `New client form - ${clientData.main_driver_name} ${clientData.main_driver_firstname} (ID: ${clientData.id})`,
+      intro: isFrench
+        ? `Veuillez trouver ci-joint la fiche client de ${clientData.main_driver_name} ${clientData.main_driver_firstname}.`
+        : `Please find attached the client form for ${clientData.main_driver_name} ${clientData.main_driver_firstname}.`,
+      clientId: isFrench ? 'ID Client' : 'Client ID',
+      name: isFrench ? 'Nom' : 'Name',
+      firstname: isFrench ? 'Prénom' : 'Firstname',
+      email: 'Email',
+      phone: isFrench ? 'Téléphone' : 'Phone',
+      submissionDate: isFrench ? 'Date de soumission' : 'Submission date'
+    };
+
+    // Préparer les pièces jointes pour Resend (base64)
+    const resendAttachments = [];
+    for (const att of attachments) {
+      if (att.path) {
+        const fileContent = fs.readFileSync(att.path);
+        resendAttachments.push({ filename: att.filename, content: fileContent.toString('base64') });
+      } else if (att.content) {
+        resendAttachments.push({ filename: att.filename, content: att.content });
+      }
+    }
+
+    const htmlContent = generateEmailTemplate(clientData, emailTexts, attachments);
+    const textContent = `${emailTexts.intro}\n\n${emailTexts.clientId}: ${clientData.id}\n${emailTexts.name}: ${clientData.main_driver_name}\n${emailTexts.firstname}: ${clientData.main_driver_firstname}\n${emailTexts.email}: ${clientData.main_driver_email}\n${emailTexts.phone}: ${clientData.main_driver_phone}\n${emailTexts.submissionDate}: ${new Date().toLocaleString()}`;
+
+    const fromAddress = process.env.BREVO_VERIFIED_SENDER || process.env.EMAIL_USER || 'onboarding@resend.dev';
+    const toAddress = process.env.EMAIL_TO || 'contact@raiatearentcar.com';
+
+    const payload = {
+      from: fromAddress,
+      to: [toAddress],
+      subject: emailTexts.subject,
+      html: htmlContent,
+      text: textContent,
+      attachments: resendAttachments
+    };
+
+    console.log('=== ENVOI EMAIL VIA RESEND ===');
+    const response = await axios.post('https://api.resend.com/emails', payload, {
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: Number(process.env.EMAIL_TIMEOUT) || 90000
+    });
+
+    console.log('✅ EMAIL ENVOYÉ (Resend)', response.data?.id);
+    return { success: true, method: 'RESEND', messageId: response.data?.id, data: response.data };
+  } catch (error) {
+    console.error('❌ ERREUR RESEND:', error.response?.data || error.message);
+    return { success: false, error: error.response?.data || error.message, method: 'RESEND' };
+  }
+}
+
+// Fonction pour envoyer un email (Resend prioritaire, SMTP fallback)
 async function sendEmailWithFallback(clientData, attachments = []) {
-  console.log('=== DÉBUT ENVOI EMAIL (SMTP) ===');
+  console.log('=== DÉBUT ENVOI EMAIL ===');
+  if (process.env.RESEND_API_KEY) {
+    const r = await sendEmailViaResend(clientData, attachments);
+    if (r.success) return r;
+    console.log('⚠️ Resend a échoué, fallback SMTP...');
+  }
   return await sendEmailViaSMTP(clientData, attachments);
 }
 
@@ -52,10 +124,12 @@ async function sendEmailViaSMTP(clientData, attachments = []) {
       } else {
         console.log('Utilisation de la configuration SMTP standard...');
         // Configuration SMTP standard
+        const smtpPort = Number(process.env.EMAIL_PORT) || 587;
+        const smtpSecure = smtpPort === 465; // SSL/TLS si 465
         transporterConfig = {
           host: process.env.EMAIL_HOST,
-          port: process.env.EMAIL_PORT,
-          secure: false,
+          port: smtpPort,
+          secure: smtpSecure,
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
@@ -63,9 +137,9 @@ async function sendEmailViaSMTP(clientData, attachments = []) {
           tls: {
             rejectUnauthorized: false
           },
-          connectionTimeout: 60000,
+          connectionTimeout: Number(process.env.EMAIL_TIMEOUT) || 60000,
           greetingTimeout: 30000,
-          socketTimeout: 60000
+          socketTimeout: Number(process.env.EMAIL_TIMEOUT) || 60000
         };
       }
       
@@ -1492,7 +1566,7 @@ ${emailTexts.submissionDate}: ${new Date(client.submission_date).toLocaleString(
 
 // Route de test pour l'envoi d'email (API Brevo + SMTP fallback)
 app.get('/test-email', async (req, res) => {
-  console.log('=== TEST EMAIL (SMTP) DEMANDÉ ===');
+  console.log('=== TEST EMAIL DEMANDÉ ===');
   console.log('EMAIL_HOST:', process.env.EMAIL_HOST);
   console.log('EMAIL_PORT:', process.env.EMAIL_PORT);
   console.log('EMAIL_USER:', process.env.EMAIL_USER);
@@ -1500,17 +1574,22 @@ app.get('/test-email', async (req, res) => {
   console.log('Mot de passe SMTP défini:', process.env.EMAIL_PASS ? 'OUI' : 'NON');
 
   try {
+    const testPort = Number(process.env.EMAIL_PORT) || 587;
+    const testSecure = testPort === 465;
     const transporterConfig = {
       host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      secure: false,
+      port: testPort,
+      secure: testSecure,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       },
       tls: {
         rejectUnauthorized: false
-      }
+      },
+      connectionTimeout: Number(process.env.EMAIL_TIMEOUT) || 60000,
+      greetingTimeout: 30000,
+      socketTimeout: Number(process.env.EMAIL_TIMEOUT) || 60000
     };
 
     const transporter = nodemailer.createTransport(transporterConfig);
@@ -1535,9 +1614,9 @@ app.get('/test-email', async (req, res) => {
 
     const result = await sendEmailWithFallback(testClientData, testAttachments);
     if (result.success) {
-      return res.json({ success: true, method: 'SMTP', messageId: result.messageId });
+      return res.json({ success: true, method: result.method || 'SMTP', messageId: result.messageId });
     }
-    return res.status(500).json({ success: false, method: 'SMTP', error: result.error || 'Échec envoi' });
+    return res.status(500).json({ success: false, method: result.method || 'SMTP', error: result.error || 'Échec envoi' });
   } catch (error) {
     console.error('❌ ERREUR TEST SMTP:', error);
     res.status(500).json({ success: false, method: 'SMTP', error: error.message });
