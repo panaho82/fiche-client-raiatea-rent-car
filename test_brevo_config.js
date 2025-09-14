@@ -61,7 +61,7 @@ async function testBrevoConfig() {
   try {
     // Créer le transporteur
     console.log('\n📧 Création du transporteur Nodemailer...');
-    const transporter = nodemailer.createTransporter(transporterConfig);
+    const transporter = nodemailer.createTransport(transporterConfig);
     
     // Test de vérification
     console.log('🔍 Vérification de la connexion SMTP...');

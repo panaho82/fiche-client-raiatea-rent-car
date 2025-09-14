@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const PDFDocument = require('pdfkit');
@@ -94,7 +96,7 @@ async function sendEmailViaSMTP(clientData, attachments = []) {
       }
       
       console.log('Configuration du transporteur créée');
-      const transporter = nodemailer.createTransporter(transporterConfig);
+      const transporter = nodemailer.createTransport(transporterConfig);
       
       // Déterminer la langue
       const isFrench = clientData.language === 'fr';
@@ -417,10 +419,30 @@ if (!fs.existsSync(adminPath)) {
 }
 
 // Middleware
-app.use(cors());
+// Security headers
+app.use(helmet());
+
+// CORS restreint via ALLOWED_ORIGINS (séparées par des virgules)
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+const corsOptions = allowedOrigins.length > 0 ? {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  }
+} : {};
+app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '10mb' }));  // Augmenter la limite pour les signatures
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(publicDir));
+
+// Rate limiting (global doux) et renforcement ciblé
+const globalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false });
+app.use(globalLimiter);
+const submitLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false });
+app.use('/api/submit', submitLimiter);
+const emailTestLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false });
+app.use('/test-email', emailTestLimiter);
 
 // Route principale pour s'assurer que l'application fonctionne sur Render
 app.get('/', (req, res) => {
@@ -465,8 +487,24 @@ app.get('/', (req, res) => {
   }
 });
 
+// Authentification Basic optionnelle pour l'admin et les API sensibles
+function adminAuth(req, res, next) {
+  const user = process.env.ADMIN_USER;
+  const pass = process.env.ADMIN_PASS;
+  if (!user || !pass) {
+    return next();
+  }
+  const authHeader = req.headers['authorization'] || '';
+  const expected = 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
+  if (authHeader === expected) {
+    return next();
+  }
+  res.set('WWW-Authenticate', 'Basic realm="RAIATEA-ADMIN"');
+  return res.status(401).send('Authentication required');
+}
+
 // Route pour l'interface d'administration
-app.get('/admin', (req, res) => {
+app.get('/admin', adminAuth, (req, res) => {
   const adminPath = path.join(__dirname, 'public', 'admin.html');
   if (fs.existsSync(adminPath)) {
     res.sendFile(adminPath);
@@ -960,15 +998,15 @@ function generatePDF(clientData) {
     });
     
     // Carte de crédit additionnelle (si présente)
-    if (clientData.has_additional_card === 'true' || clientData.has_additional_card === true) {
+    if (clientData.has_additional_credit_card === 'true' || clientData.has_additional_credit_card === true) {
       doc.moveDown(0.5);
       addSectionTitle(texts.additionalCreditCard);
       
       // Liste des champs pour la carte de crédit additionnelle
       const additionalCardFields = [
-        { label: texts.cardType, value: clientData.additional_card_type || '' },
-        { label: texts.cardNumber, value: clientData.additional_card_number || '' },
-        { label: texts.expiryDate, value: clientData.additional_card_expiry_date || '' },
+        { label: texts.cardType, value: clientData.additional_card_type || clientData.additional_credit_card_type || '' },
+        { label: texts.cardNumber, value: clientData.additional_card_number || clientData.additional_credit_card || '' },
+        { label: texts.expiryDate, value: clientData.additional_card_expiry_date || clientData.additional_credit_card_expiry || '' },
         { label: texts.cardHolder, value: clientData.additional_card_holder_name || '' }
       ];
       
@@ -986,10 +1024,17 @@ function generatePDF(clientData) {
       addSectionTitle(texts.signature);
       
       try {
+        // Convertir la DataURL en Buffer binaire pour PDFKit
+        let signatureSource = clientData.signature_data;
+        if (typeof signatureSource === 'string' && signatureSource.startsWith('data:image')) {
+          const base64Data = signatureSource.split(',')[1];
+          if (base64Data) {
+            signatureSource = Buffer.from(base64Data, 'base64');
+          }
+        }
         // Centrer la signature sur la page
-        doc.image(clientData.signature_data, {
-          fit: [300, 150],
-          align: 'center'
+        doc.image(signatureSource, {
+          fit: [300, 150]
         });
         
         // Ajouter la date sous la signature
@@ -1087,6 +1132,29 @@ app.post('/api/submit', async (req, res) => {
       clientData.additional_driver_license_back_data = optimizeBase64Image(clientData.additional_driver_license_back_data);
     }
     
+    // Masquer les numéros de carte avant toute persistance/génération
+    const maskCardNumber = (value) => {
+      if (!value || typeof value !== 'string') return value;
+      const digits = value.replace(/\D/g, '');
+      if (!digits) return value;
+      const last4 = digits.slice(-4);
+      return `**** **** **** ${last4}`.trim();
+    };
+    // Carte principale (nouveau et ancien champ)
+    if (clientData.main_driver_credit_card) {
+      clientData.main_driver_credit_card = maskCardNumber(clientData.main_driver_credit_card);
+    }
+    if (clientData.main_card_number) {
+      clientData.main_card_number = maskCardNumber(clientData.main_card_number);
+    }
+    // Carte supplémentaire (nouveau et ancien champ)
+    if (clientData.additional_credit_card) {
+      clientData.additional_credit_card = maskCardNumber(clientData.additional_credit_card);
+    }
+    if (clientData.additional_card_number) {
+      clientData.additional_card_number = maskCardNumber(clientData.additional_card_number);
+    }
+
     // Générer le PDF
     console.log('Génération du PDF...');
     const pdfPath = await generatePDF(clientData);
@@ -1249,7 +1317,7 @@ function insertClientData(clientData, pdfPath) {
 }
 
 // API pour récupérer tous les clients
-app.get('/api/clients', (req, res) => {
+app.get('/api/clients', adminAuth, (req, res) => {
   db.all('SELECT * FROM clients ORDER BY submission_date DESC', [], (err, rows) => {
     if (err) {
       console.error('Erreur lors de la récupération des clients:', err.message);
@@ -1261,7 +1329,7 @@ app.get('/api/clients', (req, res) => {
 });
 
 // API pour récupérer un client par ID
-app.get('/api/clients/:id', (req, res) => {
+app.get('/api/clients/:id', adminAuth, (req, res) => {
   const { id } = req.params;
   
   db.get('SELECT * FROM clients WHERE id = ?', [id], (err, row) => {
@@ -1279,7 +1347,7 @@ app.get('/api/clients/:id', (req, res) => {
 });
 
 // API pour exporter les données au format CSV
-app.get('/api/export/csv', (req, res) => {
+app.get('/api/export/csv', adminAuth, (req, res) => {
   db.all('SELECT * FROM clients ORDER BY submission_date DESC', [], (err, rows) => {
     if (err) {
       console.error('Erreur lors de la récupération des clients:', err.message);
@@ -1311,7 +1379,7 @@ app.get('/api/export/csv', (req, res) => {
 });
 
 // API pour télécharger un PDF
-app.get('/api/download-pdf/:id', (req, res) => {
+app.get('/api/download-pdf/:id', adminAuth, (req, res) => {
   const clientId = req.params.id;
   
   db.get('SELECT * FROM clients WHERE id = ?', [clientId], async (err, client) => {
@@ -1338,7 +1406,7 @@ app.get('/api/download-pdf/:id', (req, res) => {
 });
 
 // API pour renvoyer un email
-app.post('/api/resend-email/:id', (req, res) => {
+app.post('/api/resend-email/:id', adminAuth, (req, res) => {
   const clientId = req.params.id;
   
   db.get('SELECT * FROM clients WHERE id = ?', [clientId], async (err, client) => {
@@ -1511,7 +1579,7 @@ app.get('/test-email', async (req, res) => {
       }
     };
     
-    const transporter = nodemailer.createTransporter(transporterConfig);
+    const transporter = nodemailer.createTransport(transporterConfig);
     
     // Test de vérification SMTP
     transporter.verify(function(error, success) {

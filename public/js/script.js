@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const additionalCreditCardSection = document.getElementById('additional-credit-card-section');
     const successMessage = document.getElementById('success-message');
     const signaturePadCanvas = document.getElementById('signature-pad');
-    const clearSignatureButton = document.getElementById('clear-signature');
+    const clearSignatureButtons = document.querySelectorAll('#clear-signature');
     const signatureDataInput = document.getElementById('signature-data');
     
     // Éléments pour les conditions de location
@@ -44,9 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
         maxWidth: 2.5
     });
     
-    // Réinitialiser le pad de signature
-    clearSignatureButton.addEventListener('click', function() {
-        signaturePad.clear();
+    // Réinitialiser le pad de signature (gérer FR/EN)
+    clearSignatureButtons.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            signaturePad.clear();
+        });
     });
     
     // Définir les textes pour les placeholders des images
@@ -308,9 +310,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     
                     // Réinitialiser les aperçus d'images
-                    document.querySelectorAll('.image-preview-container img').forEach(img => {
+                    document.querySelectorAll('.preview-container img').forEach(img => {
                         img.src = '';
-                        img.style.display = 'none';
+                        img.classList.add('hidden');
+                        if (img.parentElement && img.parentElement.classList) {
+                            img.parentElement.classList.remove('has-image');
+                        }
                     });
                 } else {
                     throw new Error(languageSelect.value === 'fr' ? 
