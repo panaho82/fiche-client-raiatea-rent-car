@@ -11,6 +11,89 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearSignatureButtons = document.querySelectorAll('#clear-signature');
     const signatureDataInput = document.getElementById('signature-data');
     
+    // Initialisation de Flatpickr pour tous les champs de date
+    // Vérifier si Flatpickr est disponible
+    if (typeof flatpickr !== 'undefined') {
+        // Configuration pour les dates de naissance (personnes nées entre 1920 et 2005)
+        const birthDateFields = [
+            document.getElementById('main-driver-birth-date'),
+            document.getElementById('additional-driver-birth-date')
+        ];
+        
+        birthDateFields.forEach(field => {
+            if (field) {
+                flatpickr(field, {
+                dateFormat: 'Y-m-d',
+                locale: languageSelect.value === 'fr' ? 'fr' : 'default',
+                defaultDate: '1980-01-01',
+                minDate: '1920-01-01',
+                maxDate: new Date(new Date().getFullYear() - 18, 11, 31), // Au moins 18 ans
+                yearSelectorType: 'dropdown',
+                allowInput: true,
+                clickOpens: true
+                });
+            }
+        });
+        
+        // Configuration pour les dates d'émission du permis (entre 1950 et aujourd'hui)
+        const licenseIssueDateFields = [
+            document.getElementById('main-driver-license-issue-date'),
+            document.getElementById('additional-driver-license-issue-date')
+        ];
+        
+        licenseIssueDateFields.forEach(field => {
+            if (field) {
+                flatpickr(field, {
+                    dateFormat: 'Y-m-d',
+                    locale: languageSelect.value === 'fr' ? 'fr' : 'default',
+                    defaultDate: new Date(),
+                    minDate: '1950-01-01',
+                    maxDate: new Date(),
+                    yearSelectorType: 'dropdown',
+                    allowInput: true,
+                    clickOpens: true
+                });
+            }
+        });
+        
+        // Configuration pour les dates de validité du permis (entre aujourd'hui et 50 ans dans le futur)
+        const licenseValidityDateFields = [
+            document.getElementById('main-driver-license-validity-date'),
+            document.getElementById('additional-driver-license-validity-date')
+        ];
+        
+        licenseValidityDateFields.forEach(field => {
+            if (field) {
+                flatpickr(field, {
+                    dateFormat: 'Y-m-d',
+                    locale: languageSelect.value === 'fr' ? 'fr' : 'default',
+                    defaultDate: new Date(new Date().getFullYear() + 10, 11, 31),
+                    minDate: new Date(),
+                    maxDate: new Date(new Date().getFullYear() + 50, 11, 31),
+                    yearSelectorType: 'dropdown',
+                    allowInput: true,
+                    clickOpens: true
+                });
+            }
+        });
+    
+        // Configuration pour la date de signature (aujourd'hui par défaut)
+        const signatureDateField = document.getElementById('signature-date');
+        if (signatureDateField) {
+            flatpickr(signatureDateField, {
+                dateFormat: 'Y-m-d',
+                locale: languageSelect.value === 'fr' ? 'fr' : 'default',
+                defaultDate: new Date(),
+                minDate: new Date(new Date().getFullYear() - 1, 0, 1), // Un an dans le passé
+                maxDate: new Date(),
+                allowInput: true,
+                clickOpens: true
+            });
+        }
+    } else {
+        console.warn('Flatpickr n\'est pas chargé, utilisation des sélecteurs de date natifs');
+    }
+    
     // Éléments pour les conditions de location
     const rentalConditionsToggle = document.getElementById('rental-conditions-toggle');
     const rentalConditionsContent = document.getElementById('rental-conditions-content');
@@ -78,9 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
     languageSelect.addEventListener('change', function() {
         setLanguage(this.value);
     });
-    
-    // Initialiser la langue
-    setLanguage(languageSelect.value);
     
     // Gérer l'affichage des conditions de location
     if (rentalConditionsToggle && rentalConditionsContent) {
@@ -382,6 +462,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Mettre à jour les placeholders des conteneurs de prévisualisation
         updatePlaceholders(lang);
+        
+        // Mettre à jour la locale de Flatpickr pour tous les champs de date
+        document.querySelectorAll('input[type="date"]').forEach(field => {
+            if (field._flatpickr) {
+                field._flatpickr.set('locale', lang === 'fr' ? 'fr' : 'default');
+            }
+        });
     }
     
     function toggleSection(isVisible, section) {
@@ -429,4 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return true;
     }
+    
+    // Initialiser la langue à la fin, une fois que tout est configuré
+    setLanguage(languageSelect.value);
 });
