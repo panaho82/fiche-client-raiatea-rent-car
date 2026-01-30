@@ -637,12 +637,35 @@ app.post('/api/submit', async (req, res) => {
         console.log('💾 Sauvegarde en base...');
         const connection = await pool.connect();
         
-        const fields = Object.keys(clientData).filter(key => 
-          !key.includes('license_front_data') && 
-          !key.includes('license_back_data') &&
-          !key.includes('signature_data')
-        );
+        // Liste blanche des colonnes valides dans la table
+        const validColumns = [
+          'id', 'language', 'main_driver_name', 'main_driver_firstname', 'main_driver_birth_date',
+          'main_driver_birth_place', 'main_driver_nationality', 'main_driver_passport',
+          'main_driver_passport_issue_date', 'main_driver_passport_expiry_date',
+          'main_driver_license', 'main_driver_license_number', 'main_driver_license_issue_date',
+          'main_driver_license_validity_date', 'main_driver_license_expiry_date',
+          'main_driver_license_issue_place', 'main_driver_address', 'main_driver_city',
+          'main_driver_postal_code', 'main_driver_country', 'main_driver_phone',
+          'main_driver_email', 'main_driver_hotel', 'has_additional_driver',
+          'additional_driver_name', 'additional_driver_firstname', 'additional_driver_birth_date',
+          'additional_driver_birth_place', 'additional_driver_nationality',
+          'additional_driver_phone', 'additional_driver_email', 'additional_driver_address',
+          'additional_driver_postal_code', 'additional_driver_city', 'additional_driver_country',
+          'additional_driver_license', 'additional_driver_license_number',
+          'additional_driver_license_issue_date', 'additional_driver_license_validity_date',
+          'additional_driver_license_expiry_date', 'additional_driver_license_issue_place',
+          'main_driver_credit_card', 'main_driver_credit_card_expiry', 'main_card_type',
+          'main_card_number', 'main_card_expiry_date', 'main_card_holder_name',
+          'has_additional_credit_card', 'has_additional_card', 'additional_credit_card',
+          'additional_credit_card_expiry', 'additional_driver_credit_card',
+          'additional_driver_credit_card_expiry', 'additional_card_type',
+          'additional_card_number', 'additional_card_expiry_date', 'additional_card_holder_name',
+          'accept_terms', 'accept_data_processing', 'signature_date', 'signature_name',
+          'signature_data', 'main_driver_license_front_data', 'main_driver_license_back_data',
+          'additional_driver_license_front_data', 'additional_driver_license_back_data'
+        ];
         
+        const fields = Object.keys(clientData).filter(key => validColumns.includes(key));
         const values = fields.map(key => clientData[key]);
         const placeholders = fields.map((_, i) => `$${i + 1}`).join(',');
         
