@@ -315,7 +315,7 @@ app.use('/api/submit', submitLimiter);
 // ==========================
 (async () => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool.connect();
     
     // Créer la table clients avec MySQL
     await connection.query(`
@@ -454,7 +454,7 @@ app.get('/admin', adminAuth, (req, res) => {
 // Route de status (health check pour Dokploy)
 app.get('/status', async (req, res) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool.connect();
     await connection.ping();
     connection.release();
     
@@ -639,7 +639,7 @@ app.post('/api/submit', async (req, res) => {
         
         // Sauvegarder en base
         console.log('💾 Sauvegarde en base...');
-        const connection = await pool.getConnection();
+        const connection = await pool.connect();
         
         const fields = Object.keys(clientData).filter(key => 
           !key.includes('license_front_data') && 
@@ -672,7 +672,7 @@ app.post('/api/submit', async (req, res) => {
 // API récupérer tous les clients
 app.get('/api/clients', adminAuth, async (req, res) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool.connect();
     const [rows] = await connection.query('SELECT * FROM clients ORDER BY submission_date DESC');
     connection.release();
     res.json(rows);
@@ -685,7 +685,7 @@ app.get('/api/clients', adminAuth, async (req, res) => {
 // API récupérer un client par ID
 app.get('/api/clients/:id', adminAuth, async (req, res) => {
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool.connect();
     const [rows] = await connection.query('SELECT * FROM clients WHERE id = ?', [req.params.id]);
     connection.release();
     
