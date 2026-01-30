@@ -398,7 +398,7 @@ app.use('/api/submit', submitLimiter);
         INDEX idx_submission_date (submission_date),
         INDEX idx_main_driver_name (main_driver_name),
         INDEX idx_main_driver_email (main_driver_email)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      )
     `);
     
     console.log('✅ Table clients créée ou déjà existante');
