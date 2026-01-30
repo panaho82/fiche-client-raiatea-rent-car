@@ -386,12 +386,12 @@ app.use('/api/submit', submitLimiter);
         accept_data_processing BOOLEAN,
         signature_date DATE,
         signature_name VARCHAR(255),
-        signature_data LONGTEXT,
+        signature_data TEXT,
         
-        main_driver_license_front_data LONGTEXT,
-        main_driver_license_back_data LONGTEXT,
-        additional_driver_license_front_data LONGTEXT,
-        additional_driver_license_back_data LONGTEXT,
+        main_driver_license_front_data TEXT,
+        main_driver_license_back_data TEXT,
+        additional_driver_license_front_data TEXT,
+        additional_driver_license_back_data TEXT,
         
         submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         
