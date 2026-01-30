@@ -154,11 +154,19 @@ async function sendEmailViaResend(clientData, attachments = []) {
       attachments: resendAttachments
     });
 
-    console.log('✅ EMAIL ENVOYÉ (Resend)', data.id);
-    return { success: true, method: 'RESEND', messageId: data.id, data };
+    console.log('✅ RÉPONSE RESEND:', JSON.stringify(data, null, 2));
+    
+    if (data.error) {
+      console.error('❌ ERREUR RESEND API:', data.error);
+      return { success: false, error: data.error, method: 'RESEND' };
+    }
+    
+    console.log('✅ EMAIL ENVOYÉ (Resend)', data.id || data.data?.id);
+    return { success: true, method: 'RESEND', messageId: data.id || data.data?.id, data };
     
   } catch (error) {
-    console.error('❌ ERREUR RESEND:', error.message);
+    console.error('❌ ERREUR RESEND EXCEPTION:', error);
+    console.error('Stack:', error.stack);
     return { success: false, error: error.message, method: 'RESEND' };
   }
 }
@@ -471,11 +479,11 @@ app.get('/status', async (req, res) => {
   }
 });
 
-// Fonction de génération PDF (identique à l'original, juste adaptée)
+// Fonction de génération PDF - Design complet et professionnel
 function generatePDF(clientData) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ 
-      margin: 50,
+      margin: 40,
       size: 'A4'
     });
     
@@ -492,40 +500,206 @@ function generatePDF(clientData) {
     
     doc.pipe(pdfStream);
     
-    // Même logique PDF que l'original...
     const isFrench = clientData.language === 'fr';
+    const pageWidth = doc.page.width - 80;
     
-    doc.font('Helvetica').fontSize(12);
-    doc.fontSize(20).font('Helvetica-Bold').text('RAIATEA RENT CAR', { align: 'center' });
-    doc.moveDown(0.5);
-    doc.fontSize(16).text(isFrench ? 'Fiche de renseignements client' : 'Client Information Form', { align: 'center' });
-    doc.moveDown(1);
+    // Fonction helper pour formater les dates
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '-';
+      try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US');
+      } catch {
+        return dateStr;
+      }
+    };
     
-    doc.fontSize(12).text(`ID: ${clientData.id}`, { align: 'right' });
+    // Fonction helper pour afficher un champ avec espacement
+    const addField = (label, value, indent = 0) => {
+      if (value && value !== 'undefined' && value !== 'null') {
+        doc.font('Helvetica-Bold').text(`${label}: `, { continued: true, indent, lineGap: 4 });
+        doc.font('Helvetica').text(value, { lineGap: 4 });
+        doc.moveDown(0.3);
+      }
+    };
+    
+    // Fonction pour dessiner une ligne de séparation
+    const drawLine = () => {
+      doc.moveTo(40, doc.y).lineTo(pageWidth + 40, doc.y).stroke('#E6B800');
+      doc.moveDown(0.5);
+    };
+    
+    // Fonction pour dessiner un titre de section
+    const drawSectionTitle = (title) => {
+      doc.moveDown(1);
+      doc.rect(40, doc.y, pageWidth, 24).fill('#E6B800');
+      doc.fillColor('#000000').fontSize(12).font('Helvetica-Bold');
+      doc.text(title, 50, doc.y - 18);
+      doc.fillColor('#000000');
+      doc.moveDown(1.2);
+    };
+    
+    // ==================== EN-TÊTE ====================
+    doc.rect(0, 0, doc.page.width, 80).fill('#E6B800');
+    doc.fillColor('#000000');
+    doc.fontSize(28).font('Helvetica-Bold').text('RAIATEA RENT CAR', 0, 25, { align: 'center' });
+    doc.fontSize(14).font('Helvetica').text(isFrench ? 'Fiche de Renseignements Client' : 'Client Information Form', 0, 55, { align: 'center' });
+    
+    doc.fillColor('#000000');
+    doc.y = 100;
+    
+    // ID et Date
+    doc.fontSize(10).font('Helvetica');
+    doc.text(`ID: ${clientData.id || '-'}`, 40, 100);
+    doc.text(`Date: ${formatDate(new Date().toISOString())}`, 0, 100, { align: 'right', width: pageWidth + 40 });
     doc.moveDown(1.5);
     
-    // Conducteur principal
-    doc.fontSize(14).font('Helvetica-Bold').text(isFrench ? 'CONDUCTEUR PRINCIPAL' : 'MAIN DRIVER');
-    doc.moveDown(0.5);
-    doc.fontSize(11).font('Helvetica');
-    doc.text(`${isFrench ? 'Nom' : 'Name'}: ${clientData.main_driver_name || ''}`);
-    doc.text(`${isFrench ? 'Prénom' : 'Firstname'}: ${clientData.main_driver_firstname || ''}`);
-    doc.text(`Email: ${clientData.main_driver_email || ''}`);
-    doc.text(`${isFrench ? 'Téléphone' : 'Phone'}: ${clientData.main_driver_phone || ''}`);
-    doc.moveDown(1);
+    // ==================== CONDUCTEUR PRINCIPAL ====================
+    drawSectionTitle(isFrench ? 'CONDUCTEUR PRINCIPAL' : 'MAIN DRIVER');
+    doc.fontSize(10).font('Helvetica');
     
-    if (clientData.main_driver_credit_card) {
-      doc.fontSize(14).font('Helvetica-Bold').text(isFrench ? 'CARTE DE CRÉDIT' : 'CREDIT CARD');
-      doc.moveDown(0.5);
-      doc.fontSize(11).font('Helvetica');
-      doc.text(`${isFrench ? 'Numéro' : 'Number'}: ${clientData.main_driver_credit_card}`);
-      doc.text(`${isFrench ? 'Expiration' : 'Expiry'}: ${clientData.main_driver_credit_card_expiry || ''}`);
+    // Identité
+    addField(isFrench ? 'Nom' : 'Last Name', clientData.main_driver_name);
+    addField(isFrench ? 'Prénom' : 'First Name', clientData.main_driver_firstname);
+    addField(isFrench ? 'Date de naissance' : 'Birth Date', formatDate(clientData.main_driver_birth_date));
+    addField(isFrench ? 'Lieu de naissance' : 'Birth Place', clientData.main_driver_birth_place);
+    addField(isFrench ? 'Nationalité' : 'Nationality', clientData.main_driver_nationality);
+    doc.moveDown(0.8);
+    
+    // Passeport
+    if (clientData.main_driver_passport) {
+      doc.font('Helvetica-Bold').fontSize(10).text(isFrench ? '• Passeport' : '• Passport', { underline: true });
+      doc.moveDown(0.4);
+      doc.font('Helvetica').fontSize(10);
+      addField(isFrench ? 'N° Passeport' : 'Passport No', clientData.main_driver_passport);
+      addField(isFrench ? 'Date émission' : 'Issue Date', formatDate(clientData.main_driver_passport_issue_date));
+      addField(isFrench ? 'Date expiration' : 'Expiry Date', formatDate(clientData.main_driver_passport_expiry_date));
+      doc.moveDown(0.8);
     }
     
+    // Permis de conduire
+    if (clientData.main_driver_license_number) {
+      doc.font('Helvetica-Bold').fontSize(10).text(isFrench ? '• Permis de conduire' : '• Driver License', { underline: true });
+      doc.moveDown(0.4);
+      doc.font('Helvetica').fontSize(10);
+      addField(isFrench ? 'N° Permis' : 'License No', clientData.main_driver_license_number);
+      addField(isFrench ? 'Catégorie' : 'Category', clientData.main_driver_license);
+      addField(isFrench ? 'Lieu émission' : 'Issue Place', clientData.main_driver_license_issue_place);
+      addField(isFrench ? 'Date émission' : 'Issue Date', formatDate(clientData.main_driver_license_issue_date));
+      addField(isFrench ? 'Date validité' : 'Validity Date', formatDate(clientData.main_driver_license_validity_date));
+      addField(isFrench ? 'Date expiration' : 'Expiry Date', formatDate(clientData.main_driver_license_expiry_date));
+      doc.moveDown(0.8);
+    }
+    
+    // Coordonnées
+    doc.font('Helvetica-Bold').fontSize(10).text(isFrench ? '• Coordonnées' : '• Contact Details', { underline: true });
+    doc.moveDown(0.4);
+    doc.font('Helvetica').fontSize(10);
+    addField(isFrench ? 'Adresse' : 'Address', clientData.main_driver_address);
+    addField(isFrench ? 'Code postal' : 'Postal Code', clientData.main_driver_postal_code);
+    addField(isFrench ? 'Ville' : 'City', clientData.main_driver_city);
+    addField(isFrench ? 'Pays' : 'Country', clientData.main_driver_country);
+    addField(isFrench ? 'Téléphone' : 'Phone', clientData.main_driver_phone);
+    addField('Email', clientData.main_driver_email);
+    addField(isFrench ? 'Hôtel / Hébergement' : 'Hotel / Accommodation', clientData.main_driver_hotel);
+    
+    // ==================== CARTE DE CRÉDIT PRINCIPALE ====================
+    if (clientData.main_driver_credit_card || clientData.main_card_number) {
+      drawSectionTitle(isFrench ? 'CARTE DE CRÉDIT - CONDUCTEUR PRINCIPAL' : 'CREDIT CARD - MAIN DRIVER');
+      doc.fontSize(10).font('Helvetica');
+      
+      addField(isFrench ? 'Type de carte' : 'Card Type', clientData.main_card_type);
+      addField(isFrench ? 'Numéro' : 'Card Number', clientData.main_driver_credit_card || clientData.main_card_number);
+      addField(isFrench ? 'Date expiration' : 'Expiry Date', clientData.main_driver_credit_card_expiry || clientData.main_card_expiry_date);
+      addField(isFrench ? 'Titulaire' : 'Card Holder', clientData.main_card_holder_name);
+    }
+    
+    // ==================== CONDUCTEUR ADDITIONNEL ====================
+    if (clientData.has_additional_driver === true || clientData.has_additional_driver === 'true') {
+      // Nouvelle page si nécessaire
+      if (doc.y > 550) doc.addPage();
+      
+      drawSectionTitle(isFrench ? 'CONDUCTEUR ADDITIONNEL' : 'ADDITIONAL DRIVER');
+      doc.fontSize(10).font('Helvetica');
+      
+      addField(isFrench ? 'Nom' : 'Last Name', clientData.additional_driver_name);
+      addField(isFrench ? 'Prénom' : 'First Name', clientData.additional_driver_firstname);
+      addField(isFrench ? 'Date de naissance' : 'Birth Date', formatDate(clientData.additional_driver_birth_date));
+      addField(isFrench ? 'Lieu de naissance' : 'Birth Place', clientData.additional_driver_birth_place);
+      addField(isFrench ? 'Nationalité' : 'Nationality', clientData.additional_driver_nationality);
+      doc.moveDown(0.8);
+      
+      if (clientData.additional_driver_license_number) {
+        doc.font('Helvetica-Bold').fontSize(10).text(isFrench ? '• Permis de conduire' : '• Driver License', { underline: true });
+        doc.moveDown(0.4);
+        doc.font('Helvetica').fontSize(10);
+        addField(isFrench ? 'N° Permis' : 'License No', clientData.additional_driver_license_number);
+        addField(isFrench ? 'Catégorie' : 'Category', clientData.additional_driver_license);
+        addField(isFrench ? 'Lieu émission' : 'Issue Place', clientData.additional_driver_license_issue_place);
+        addField(isFrench ? 'Date émission' : 'Issue Date', formatDate(clientData.additional_driver_license_issue_date));
+        addField(isFrench ? 'Date expiration' : 'Expiry Date', formatDate(clientData.additional_driver_license_expiry_date));
+        doc.moveDown(0.8);
+      }
+      
+      doc.font('Helvetica-Bold').fontSize(10).text(isFrench ? '• Coordonnées' : '• Contact Details', { underline: true });
+      doc.moveDown(0.4);
+      doc.font('Helvetica').fontSize(10);
+      addField(isFrench ? 'Adresse' : 'Address', clientData.additional_driver_address);
+      addField(isFrench ? 'Code postal' : 'Postal Code', clientData.additional_driver_postal_code);
+      addField(isFrench ? 'Ville' : 'City', clientData.additional_driver_city);
+      addField(isFrench ? 'Pays' : 'Country', clientData.additional_driver_country);
+      addField(isFrench ? 'Téléphone' : 'Phone', clientData.additional_driver_phone);
+      addField('Email', clientData.additional_driver_email);
+    }
+    
+    // ==================== CARTE DE CRÉDIT ADDITIONNELLE ====================
+    if ((clientData.has_additional_card === true || clientData.has_additional_card === 'true' || 
+         clientData.has_additional_credit_card === true || clientData.has_additional_credit_card === 'true') &&
+        (clientData.additional_card_number || clientData.additional_credit_card || clientData.additional_driver_credit_card)) {
+      
+      if (doc.y > 650) doc.addPage();
+      
+      drawSectionTitle(isFrench ? 'CARTE DE CRÉDIT ADDITIONNELLE' : 'ADDITIONAL CREDIT CARD');
+      doc.fontSize(10).font('Helvetica');
+      
+      addField(isFrench ? 'Type de carte' : 'Card Type', clientData.additional_card_type);
+      addField(isFrench ? 'Numéro' : 'Card Number', clientData.additional_card_number || clientData.additional_credit_card || clientData.additional_driver_credit_card);
+      addField(isFrench ? 'Date expiration' : 'Expiry Date', clientData.additional_card_expiry_date || clientData.additional_credit_card_expiry || clientData.additional_driver_credit_card_expiry);
+      addField(isFrench ? 'Titulaire' : 'Card Holder', clientData.additional_card_holder_name);
+    }
+    
+    // ==================== ACCEPTATIONS ====================
+    if (doc.y > 600) doc.addPage();
+    
+    drawSectionTitle(isFrench ? 'ACCEPTATIONS ET SIGNATURE' : 'ACCEPTANCES AND SIGNATURE');
+    doc.fontSize(10).font('Helvetica');
+    
+    const checkMark = '✓';
+    const crossMark = '✗';
+    
+    const termsAccepted = clientData.accept_terms === true || clientData.accept_terms === 'true' || clientData.rental_conditions_accepted === true || clientData.rental_conditions_accepted === 'true';
+    const dataAccepted = clientData.accept_data_processing === true || clientData.accept_data_processing === 'true';
+    
+    doc.moveDown(0.3);
+    doc.text(`${termsAccepted ? checkMark : crossMark} ${isFrench ? 'Conditions générales de location acceptées' : 'Rental terms and conditions accepted'}`, { lineGap: 6 });
+    doc.moveDown(0.5);
+    doc.text(`${dataAccepted ? checkMark : crossMark} ${isFrench ? 'Traitement des données personnelles accepté' : 'Personal data processing accepted'}`, { lineGap: 6 });
+    doc.moveDown(0.8);
+    
+    if (clientData.signature_name) {
+      addField(isFrench ? 'Signataire' : 'Signatory', clientData.signature_name);
+    }
+    if (clientData.signature_date) {
+      addField(isFrench ? 'Date de signature' : 'Signature Date', formatDate(clientData.signature_date));
+    }
+    
+    // ==================== SIGNATURE ====================
     if (clientData.signature_data) {
-      doc.addPage();
-      doc.fontSize(14).font('Helvetica-Bold').text('SIGNATURE');
-      doc.moveDown(0.5);
+      doc.moveDown(1.2);
+      doc.fontSize(11).font('Helvetica-Bold').text(isFrench ? 'Signature :' : 'Signature:');
+      doc.moveDown(0.8);
+      
       try {
         let signatureSource = clientData.signature_data;
         if (typeof signatureSource === 'string' && signatureSource.startsWith('data:image')) {
@@ -534,11 +708,24 @@ function generatePDF(clientData) {
             signatureSource = Buffer.from(base64Data, 'base64');
           }
         }
-        doc.image(signatureSource, { fit: [300, 150] });
+        doc.image(signatureSource, { fit: [200, 100] });
       } catch (error) {
         console.error('Erreur signature PDF:', error);
+        doc.fontSize(10).font('Helvetica').text(isFrench ? '(Signature électronique enregistrée)' : '(Electronic signature recorded)');
       }
     }
+    
+    // ==================== PIED DE PAGE ====================
+    doc.moveDown(2);
+    drawLine();
+    doc.fontSize(8).font('Helvetica').fillColor('#666666');
+    doc.text(
+      `RAIATEA RENT CAR - ${isFrench ? 'Document généré le' : 'Document generated on'} ${new Date().toLocaleString(isFrench ? 'fr-FR' : 'en-US')}`,
+      40,
+      doc.y,
+      { align: 'center', width: pageWidth }
+    );
+    doc.fillColor('#000000');
     
     doc.end();
   });
