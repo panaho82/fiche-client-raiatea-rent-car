@@ -1,0 +1,31 @@
+# ============================================================
+# VARIABLES D'ENVIRONNEMENT DOKPLOY - VERSION FINALE
+# ⚠️ CONTIENT VOTRE VRAIE CLÉ RESEND
+# ============================================================
+#
+# INSTRUCTIONS :
+# Copiez tout le contenu ci-dessous dans Dokploy
+# Service: raiatea-app → Onglet Environment → Bulk Edit
+#
+# ============================================================
+
+NODE_ENV=production
+PORT=3000
+DB_HOST=fiche-raiatea-rent-car-teazlm
+DB_USER=raiatea
+DB_PASSWORD=s6Fmnzckg9J9uQuvGt4B
+DB_NAME=raiatea_db
+DB_PORT=5432
+RESEND_API_KEY=re_er3tUgtZ_7qk6E28z7NqybzcRPCwEDvMv
+RESEND_FROM=contact@raiatearentcar.com
+EMAIL_TO=raiatearentcar@mail.pf
+ALLOWED_ORIGINS=https://form.raiatearentcar.com
+ADMIN_USER=admin
+ADMIN_PASS=ZlTIVrwIlZlKumEU
+ALLOW_FULL_CARD=false
+SEND_FULL_CARD_IN_EMAIL=false
+ALLOWED_CARD_BRANDS=visa,mastercard
+
+# ============================================================
+# ✅ Configuration complète et prête à l'emploi !
+# ============================================================

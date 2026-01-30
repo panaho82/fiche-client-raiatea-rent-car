@@ -5,7 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const { Resend } = require('resend');
@@ -15,29 +15,27 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // ==========================
-// Configuration MySQL Pool
+// Configuration PostgreSQL Pool
 // ==========================
-const pool = mysql.createPool({
+const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
+  user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'raiatea_db',
-  port: process.env.DB_PORT || 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  port: process.env.DB_PORT || 5432,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
 // Vérifier la connexion au démarrage
 (async () => {
   try {
-    const connection = await pool.getConnection();
-    console.log('✅ MySQL connecté avec succès');
-    connection.release();
+    const client = await pool.connect();
+    console.log('✅ PostgreSQL connecté avec succès');
+    client.release();
   } catch (error) {
-    console.error('❌ Erreur de connexion MySQL:', error);
+    console.error('❌ Erreur de connexion PostgreSQL:', error);
     process.exit(1);
   }
 })();
