@@ -644,7 +644,7 @@ app.post('/api/submit', async (req, res) => {
         );
         
         const values = fields.map(key => clientData[key]);
-        const placeholders = fields.map(() => '?').join(',');
+        const placeholders = fields.map((_, i) => `$${i + 1}`).join(',');
         
         await connection.query(
           `INSERT INTO clients (${fields.join(',')}) VALUES (${placeholders})`,
@@ -669,9 +669,9 @@ app.post('/api/submit', async (req, res) => {
 app.get('/api/clients', adminAuth, async (req, res) => {
   try {
     const connection = await pool.connect();
-    const [rows] = await connection.query('SELECT * FROM clients ORDER BY submission_date DESC');
+    const result = await connection.query('SELECT * FROM clients ORDER BY submission_date DESC');
     connection.release();
-    res.json(rows);
+    res.json(result.rows);
   } catch (error) {
     console.error('Erreur récupération clients:', error);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -682,14 +682,14 @@ app.get('/api/clients', adminAuth, async (req, res) => {
 app.get('/api/clients/:id', adminAuth, async (req, res) => {
   try {
     const connection = await pool.connect();
-    const [rows] = await connection.query('SELECT * FROM clients WHERE id = ?', [req.params.id]);
+    const result = await connection.query('SELECT * FROM clients WHERE id = $1', [req.params.id]);
     connection.release();
     
-    if (rows.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Client non trouvé' });
     }
     
-    res.json(rows[0]);
+    res.json(result.rows[0]);
   } catch (error) {
     console.error('Erreur récupération client:', error);
     res.status(500).json({ error: 'Erreur serveur' });
