@@ -451,7 +451,7 @@ app.get('/admin', adminAuth, (req, res) => {
 app.get('/status', async (req, res) => {
   try {
     const connection = await pool.connect();
-    await connection.ping();
+    await connection.query('SELECT 1');
     connection.release();
     
     res.json({
