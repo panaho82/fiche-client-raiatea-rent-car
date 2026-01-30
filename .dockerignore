@@ -1,0 +1,70 @@
+# Fichiers et dossiers à exclure du build Docker
+# Optimise la taille de l'image et le temps de build
+
+# Dépendances (seront installées dans le conteneur)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Variables d'environnement (définies dans Dokploy)
+.env
+.env.*
+!.env.template
+
+# Base de données locale (MySQL sera externe)
+*.sqlite
+*.sqlite3
+*.db
+database/
+
+# Fichiers Git
+.git/
+.gitignore
+.gitattributes
+
+# PDFs générés (stockage externe ou volume)
+pdfs/
+
+# Documentation (non nécessaire en production)
+*.md
+!README.md
+docs/
+
+# Fichiers de développement
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Fichiers de test
+test/
+tests/
+*.test.js
+*.spec.js
+coverage/
+
+# Fichiers temporaires
+tmp/
+temp/
+*.tmp
+*.log
+
+# Netlify (alternative non utilisée)
+netlify/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+!Dockerfile
+
+# Render config (non utilisé avec Dokploy)
+render.yaml
+Procfile

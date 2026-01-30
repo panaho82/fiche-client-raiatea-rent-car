@@ -1,0 +1,66 @@
+===========================================
+🚀 DÉPLOIEMENT AUTOMATIQUE FINAL
+===========================================
+
+INSTRUCTIONS:
+1. Ouvrir un terminal
+2. Se connecter: ssh root@62.146.172.163
+3. Password: 08061982
+4. Copier-coller TOUT le contenu entre les lignes === ci-dessous
+
+===START===
+
+#!/bin/bash
+set -e
+
+echo "🚀 DÉPLOIEMENT RAIATEA RENT CAR - VERSION AUTO-COMPLÈTE"
+cd /root
+
+# MySQL
+echo "🗄️  MySQL..."
+docker rm -f raiatea-mysql 2>/dev/null || true
+docker run -d --name raiatea-mysql --network bridge -e MYSQL_ROOT_PASSWORD=rootpass2024secure -e MYSQL_DATABASE=raiatea_db -e MYSQL_USER=raiatea -e MYSQL_PASSWORD=raiatea2024password -p 3306:3306 --restart unless-stopped -v raiatea-mysql-data:/var/lib/mysql mysql:8.0
+echo "⏳ Attente MySQL (30s)..." && sleep 30
+
+# Dossiers
+mkdir -p /root/raiatea-app/public/{css,js,img}
+cd /root/raiatea-app
+
+# Dockerfile (déjà créé précédemment)
+# package.json (déjà créé)
+# .env (déjà créé)
+
+# Le problème: server.js et public/ doivent venir de la machine locale
+# SOLUTION: Utiliser wget/curl depuis GitHub si le code est pushé
+
+echo ""
+echo "⚠️  ÉTAPE MANUELLE REQUISE:"
+echo "Sur votre machine locale, exécutez dans un nouveau terminal:"
+echo ""
+echo "cd /home/dev/Bureau/fiche-client-raiatea-rent-car"
+echo "scp server-dokploy.js root@62.146.172.163:/root/raiatea-app/server.js"
+echo "scp -r public root@62.146.172.163:/root/raiatea-app/"
+echo ""
+echo "Puis revenez ici et tapez 'continue' puis Enter:"
+read response
+
+# Build et Run
+echo "🐳 Build..."
+docker build -t raiatea-app:latest .
+
+echo "🚀 Run..."
+docker rm -f raiatea-app 2>/dev/null || true
+docker run -d --name raiatea-app --network bridge --link raiatea-mysql:mysql -p 3000:3000 --restart unless-stopped -v raiatea-pdfs:/app/pdfs --env-file .env raiatea-app:latest
+
+sleep 15
+
+echo "✅ TERMINÉ!"
+docker ps | grep raiatea
+curl http://localhost:3000/status
+
+===END===
+
+===========================================
+C'EST TOUT ! L'application sera accessible sur:
+http://62.146.172.163:3000
+===========================================

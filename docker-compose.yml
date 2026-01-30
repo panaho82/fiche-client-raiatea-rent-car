@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # Application Node.js
+  app:
+    build: .
+    container_name: raiatea-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=mysql
+      - DB_USER=raiatea
+      - DB_PASSWORD=raiatea2024secure
+      - DB_NAME=raiatea_db
+      - DB_PORT=3306
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM=contact@raiatearentcar.com
+      - EMAIL_TO=raiatearentcar@mail.pf
+      - ALLOWED_ORIGINS=https://form.raiatearentcar.com
+      - ALLOW_FULL_CARD=false
+      - ALLOWED_CARD_BRANDS=visa,mastercard
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - pdfs:/app/pdfs
+    networks:
+      - raiatea-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/status', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Base de données MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: raiatea-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword2024
+      - MYSQL_DATABASE=raiatea_db
+      - MYSQL_USER=raiatea
+      - MYSQL_PASSWORD=raiatea2024secure
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - raiatea-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword2024"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# Volumes persistants
+volumes:
+  mysql_data:
+    driver: local
+  pdfs:
+    driver: local
+
+# Réseau interne
+networks:
+  raiatea-network:
+    driver: bridge

@@ -1,0 +1,29 @@
+# Fichiers spécifiques à Dokploy - À IGNORER
+
+# Ce fichier contient les ignores pour le déploiement Dokploy
+# Ajouter à .gitignore les fichiers qui ne doivent PAS être versionnés
+
+# Ancien server.js (on garde pour backup)
+# server-old.js
+
+# Variables d'environnement (ne JAMAIS commiter les vraies valeurs)
+.env
+.env.local
+.env.production
+.env.dokploy
+
+# Docker local
+docker-compose.override.yml
+
+# Fichiers de backup
+*.bak
+*.backup
+server-old.js
+
+# Données locales
+database.sqlite
+database.sqlite3
+pdfs/
+
+# MySQL local (si test en local)
+mysql-data/
