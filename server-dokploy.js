@@ -723,13 +723,38 @@ app.get('/test-email', async (req, res) => {
   }
 });
 
+// ==========================
+// Auto-suppression des données > 30 jours (RGPD)
+// ==========================
+async function cleanOldData() {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `DELETE FROM clients WHERE submission_date < NOW() - INTERVAL '30 days'`
+    );
+    client.release();
+    
+    const deletedCount = result.rowCount || 0;
+    console.log(`🗑️  Nettoyage auto: ${deletedCount} enregistrement(s) > 30 jours supprimé(s)`);
+  } catch (error) {
+    console.error('❌ Erreur nettoyage auto:', error.message);
+  }
+}
+
+// Exécuter au démarrage
+cleanOldData();
+
+// Puis toutes les 24h (86400000 ms)
+setInterval(cleanOldData, 24 * 60 * 60 * 1000);
+
 // Démarrer le serveur
 app.listen(port, '0.0.0.0', () => {
   console.log('🚀 Serveur RAIATEA RENT CAR démarré');
   console.log(`📍 Port: ${port}`);
   console.log(`🌍 Environnement: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🗄️  Base: MySQL`);
+  console.log(`🗄️  Base: PostgreSQL`);
   console.log(`📧 Email: Resend`);
+  console.log(`🗑️  Auto-suppression: 30 jours`);
   console.log(`✅ Prêt pour Dokploy!`);
 });
 
