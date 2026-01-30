@@ -393,11 +393,7 @@ app.use('/api/submit', submitLimiter);
         additional_driver_license_front_data TEXT,
         additional_driver_license_back_data TEXT,
         
-        submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        
-        INDEX idx_submission_date (submission_date),
-        INDEX idx_main_driver_name (main_driver_name),
-        INDEX idx_main_driver_email (main_driver_email)
+        submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
