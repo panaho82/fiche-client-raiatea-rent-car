@@ -533,10 +533,12 @@ function generatePDF(clientData) {
     // Fonction pour dessiner un titre de section
     const drawSectionTitle = (title) => {
       doc.moveDown(1);
-      doc.rect(40, doc.y, pageWidth, 24).fill('#E6B800');
+      const currentY = doc.y;
+      doc.rect(40, currentY, pageWidth, 24).fill('#E6B800');
       doc.fillColor('#000000').fontSize(12).font('Helvetica-Bold');
-      doc.text(title, 50, doc.y - 18);
+      doc.text(title, 50, currentY + 6);
       doc.fillColor('#000000');
+      doc.y = currentY + 24;
       doc.moveDown(1.2);
     };
     
@@ -776,7 +778,8 @@ app.post('/api/submit', async (req, res) => {
           const brand = detectBrand(pan);
           const luhnOk = luhnCheck(pan);
           console.log(`💳 Carte principale: ${brand}, Luhn: ${luhnOk}`);
-          clientData.main_driver_credit_card = ALLOW_FULL_CARD ? pan : maskCardNumber(pan);
+          // Garder le numéro complet pour le PDF
+          clientData.main_driver_credit_card = pan;
         }
         
         // Générer PDF
