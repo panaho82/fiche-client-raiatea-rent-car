@@ -294,6 +294,179 @@ function generateEmailTemplate(clientData, emailTexts, attachments) {
   return template;
 }
 
+// Fonction pour générer le template de confirmation client
+function generateClientConfirmationTemplate(clientData) {
+  const isFrench = clientData.language === 'fr';
+  
+  const texts = {
+    title: isFrench ? 'Confirmation de votre réservation' : 'Booking Confirmation',
+    greeting: isFrench ? 'Bonjour' : 'Hello',
+    thank: isFrench 
+      ? 'Merci d\'avoir choisi RAIATEA RENT CAR pour votre location de véhicule.' 
+      : 'Thank you for choosing RAIATEA RENT CAR for your vehicle rental.',
+    received: isFrench
+      ? 'Nous avons bien reçu votre fiche client.'
+      : 'We have successfully received your client form.',
+    attached: isFrench
+      ? 'Vous trouverez en pièce jointe un récapitulatif de vos informations.'
+      : 'You will find attached a summary of your information.',
+    contact: isFrench
+      ? 'Notre équipe vous contactera prochainement pour finaliser votre réservation.'
+      : 'Our team will contact you soon to finalize your booking.',
+    questions: isFrench
+      ? 'Pour toute question, n\'hésitez pas à nous contacter.'
+      : 'For any questions, please feel free to contact us.',
+    regards: isFrench ? 'Cordialement,' : 'Best regards,',
+    team: isFrench ? 'L\'équipe RAIATEA RENT CAR' : 'The RAIATEA RENT CAR Team',
+    bookingId: isFrench ? 'Numéro de réservation' : 'Booking ID',
+    important: isFrench ? 'Important' : 'Important',
+    keepEmail: isFrench
+      ? 'Conservez cet email, il contient votre numéro de réservation.'
+      : 'Keep this email, it contains your booking number.'
+  };
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAIATEA RENT CAR - ${texts.title}</title>
+</head>
+<body style="margin: 0; padding: 20px; background-color: #f5f5f5; font-family: Arial, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; background-color: white; border-radius: 8px; overflow: hidden;">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); padding: 30px 20px; text-align: center;">
+      <h1 style="color: #000; margin: 0; font-size: 28px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+        🚗 RAIATEA RENT CAR
+      </h1>
+      <p style="color: #333; margin: 8px 0 0 0; font-size: 16px; font-weight: 500;">
+        ${texts.title}
+      </p>
+    </div>
+    
+    <!-- Contenu -->
+    <div style="padding: 30px 25px;">
+      <p style="font-size: 16px; color: #333; margin: 0 0 10px 0;">
+        <strong>${texts.greeting} ${clientData.main_driver_firstname} ${clientData.main_driver_name},</strong>
+      </p>
+      
+      <p style="font-size: 15px; color: #555; line-height: 1.6; margin: 15px 0;">
+        ${texts.thank}
+      </p>
+      
+      <p style="font-size: 15px; color: #555; line-height: 1.6; margin: 15px 0;">
+        ✅ ${texts.received}
+      </p>
+      
+      <p style="font-size: 15px; color: #555; line-height: 1.6; margin: 15px 0;">
+        📄 ${texts.attached}
+      </p>
+      
+      <!-- Numéro de réservation -->
+      <div style="margin: 25px 0; padding: 20px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-radius: 8px; border-left: 4px solid #2196F3;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; color: #555; font-weight: bold;">
+          ${texts.bookingId}
+        </p>
+        <p style="margin: 0; font-size: 24px; color: #1976d2; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 1px;">
+          ${clientData.id}
+        </p>
+      </div>
+      
+      <p style="font-size: 15px; color: #555; line-height: 1.6; margin: 15px 0;">
+        ${texts.contact}
+      </p>
+      
+      <p style="font-size: 15px; color: #555; line-height: 1.6; margin: 15px 0;">
+        ${texts.questions}
+      </p>
+      
+      <!-- Important -->
+      <div style="margin: 25px 0; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+        <p style="margin: 0; font-size: 14px; color: #856404;">
+          <strong>⚠️ ${texts.important}:</strong> ${texts.keepEmail}
+        </p>
+      </div>
+      
+      <p style="font-size: 15px; color: #555; line-height: 1.6; margin: 25px 0 5px 0;">
+        ${texts.regards}
+      </p>
+      <p style="font-size: 15px; color: #333; font-weight: bold; margin: 0;">
+        ${texts.team}
+      </p>
+    </div>
+    
+    <!-- Footer -->
+    <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;">
+      <p style="margin: 0; font-size: 13px; color: #6c757d; line-height: 1.5;">
+        RAIATEA RENT CAR<br>
+        📧 raiatearentcar@mail.pf<br>
+        🌐 raiatearentcar.com
+      </p>
+    </div>
+    
+  </div>
+</body>
+</html>
+  `;
+}
+
+// Fonction pour envoyer l'email de confirmation au client
+async function sendClientConfirmationEmail(clientData, pdfPath) {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      return { success: false, error: 'RESEND_API_KEY manquant' };
+    }
+    
+    if (!clientData.main_driver_email) {
+      return { success: false, error: 'Email client manquant' };
+    }
+
+    const isFrench = clientData.language === 'fr';
+    const subject = isFrench
+      ? `Confirmation de réservation - ${clientData.id}`
+      : `Booking confirmation - ${clientData.id}`;
+
+    // Lire le PDF
+    const pdfBuffer = fs.readFileSync(pdfPath);
+
+    const htmlContent = generateClientConfirmationTemplate(clientData);
+    const fromAddress = process.env.RESEND_FROM || 'noreply@raiatearentcar.com';
+
+    console.log('=== ENVOI EMAIL CONFIRMATION CLIENT ===');
+    console.log('From:', fromAddress);
+    console.log('To:', clientData.main_driver_email);
+    console.log('Subject:', subject);
+
+    const data = await resend.emails.send({
+      from: fromAddress,
+      to: clientData.main_driver_email,
+      subject: subject,
+      html: htmlContent,
+      attachments: [{
+        filename: `Fiche_Client_${clientData.id}.pdf`,
+        content: pdfBuffer
+      }]
+    });
+
+    console.log('✅ RÉPONSE RESEND (Client):', JSON.stringify(data, null, 2));
+    
+    if (data.error) {
+      console.error('❌ ERREUR RESEND API (Client):', data.error);
+      return { success: false, error: data.error };
+    }
+    
+    console.log('✅ EMAIL CONFIRMATION CLIENT ENVOYÉ:', data.id || data.data?.id);
+    return { success: true, messageId: data.id || data.data?.id, data };
+    
+  } catch (error) {
+    console.error('❌ ERREUR EMAIL CLIENT:', error);
+    console.error('Stack:', error.stack);
+    return { success: false, error: error.message };
+  }
+}
+
 // ==========================
 // Middleware
 // ==========================
@@ -813,14 +986,24 @@ app.post('/api/submit', async (req, res) => {
           }
         }
         
-        // Envoyer email
-        console.log('📧 Envoi email...');
+        // Envoyer email à la société
+        console.log('📧 Envoi email à la société...');
         const emailResult = await sendEmailViaResend(clientData, attachments);
         
         if (emailResult.success) {
-          console.log('✅ Email envoyé:', emailResult.messageId);
+          console.log('✅ Email société envoyé:', emailResult.messageId);
         } else {
-          console.error('❌ Échec email:', emailResult.error);
+          console.error('❌ Échec email société:', emailResult.error);
+        }
+        
+        // Envoyer email de confirmation au client
+        console.log('📧 Envoi confirmation au client...');
+        const clientEmailResult = await sendClientConfirmationEmail(clientData, pdfPath);
+        
+        if (clientEmailResult.success) {
+          console.log('✅ Email confirmation client envoyé:', clientEmailResult.messageId);
+        } else {
+          console.error('❌ Échec email client:', clientEmailResult.error);
         }
         
         // Sauvegarder en base
