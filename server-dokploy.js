@@ -1039,7 +1039,11 @@ app.post('/api/submit', async (req, res) => {
         ];
         
         const fields = Object.keys(clientData).filter(key => validColumns.includes(key));
-        const values = fields.map(key => clientData[key]);
+        // Convertir les chaînes vides en null pour PostgreSQL
+        const values = fields.map(key => {
+          const value = clientData[key];
+          return (value === '' || value === undefined) ? null : value;
+        });
         const placeholders = fields.map((_, i) => `$${i + 1}`).join(',');
         
         await connection.query(
