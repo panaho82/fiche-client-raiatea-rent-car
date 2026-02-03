@@ -1,0 +1,17 @@
+PORT=3000
+DB_USER=raiatea
+DB_PASSWORD=s6Fmnzckg9J9uQuvGt4B
+RESEND_FROM=noreply@raiatearentcar.com
+ALLOWED_ORIGINS=https://form.raiatearentcar.com
+ADMIN_USER=admin
+ADMIN_PASS=ZlTIVrwIlZlKumEU
+SEND_FULL_CARD_IN_EMAIL=false
+RESEND_API_KEY=re_er3tUgtZ_7qk6E28z7NqybzcRPCwEDvMv
+ALLOW_FULL_CARD=false
+DB_PORT=5432
+EMAIL_TO=raiatearentcar@mail.pf
+NODE_ENV=production
+DB_HOST=fiche-raiatea-rent-car-teazlm
+DB_NAME=raiatea_db
+ALLOWED_CARD_BRANDS=visa,mastercard
+
